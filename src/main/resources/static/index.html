@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FullCalendar Integration</title>
+    <link href="/webjars/fullcalendar/5.9.0/main.min.css" rel="stylesheet" >
+    <script src="/webjars/fullcalendar/5.9.0/main.min.js"></script>
+    <script src="/webjars/fullcalendar/5.9.0/interaction/main.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+    <!-- jsPDF библиотека за генериране на PDF файлове -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <!-- jsPDF autoTable plugin за създаване на таблици в PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+
+    <!-- ОБЯСНЕНИЕ НА БИБЛИОТЕКИТЕ:
+         1. jsPDF - основната библиотека за създаване на PDF документи в браузъра
+         2. autoTable plugin - разширение което ни позволява лесно да създаваме таблици -->
+    </head>
+    <body>
+
+    <div id="sidebar">
+        <!-- Toggle бутон за скриване/показване на sidebar - в горния десен ъгъл -->
+    <button class="sidebar-toggle" id="sidebarToggle" title="Collapse Sidebar">
+        <span class="arrows">&lt;&lt;</span>
+    </button>
+
+    <!-- Бутон за график на служителите - преместен по-надолу -->
+    <button id="employeeScheduleBtn" data-tooltip="Employee Schedule">Employee Schedule</button>
+
+    <!-- Контейнер за бутони за служители - Employee button container -->
+    <div class="button-container">
+        <button id="employeeBtn" data-tooltip="Employee Options">Employee</button>
+        <div class="extra-buttons">
+            <button id="addEmployeeBtn" data-tooltip="Add Employee"><span class="plus-icon">➕</span></button>
+            <button id="viewEmployeesBtn" data-tooltip="View All Employees"><span class="group-icon">👥</span></button>
+            <button id="scheduleBtn" onclick="goToHomePage()" data-tooltip="Home Schedule">
+                <span class="schedule-icon">📅</span></button>
+        </div>
+    </div>
+
+    <input type="text" id="searchInput" placeholder="Търси по име..." onkeyup="filterEmployees()" style="display: none;">
+
+    <!-- Контейнер за списъка със служители -->
+    <div id="employeeListContainer" class="hidden">
+        <h3>Списък на служителите</h3>
+        <ul id="employeeList"></ul>
+    </div>
+
+    <div class="form-group">
+        <label for="employeeSelect">Select an employee</label>
+        <select id="employeeSelect">
+            <option value="">Loading...</option>
+        </select>
+    </div>
+
+    <!-- НОВА СЕКЦИЯ: Таблица със седмичните данни -->
+    <!-- Показва се само когато е избран конкретен служител -->
+    <div id="weekly-schedule-section" class="weekly-schedule-section hidden">
+        <div class="weekly-schedule-header">
+            <h3 id="weekly-schedule-title">📊 Weekly hours</h3>
+            <div id="weekly-schedule-subtitle" class="weekly-schedule-subtitle">
+                <!-- Тук ще се покаже името на служителя и месеца -->
+            </div>
+            <!-- НОВ БУТОН ЗА TOGGLE -->
+            <button id="weekly-schedule-toggle" class="weekly-schedule-toggle-btn" title="Show/Hide Weekly Schedule">
+                <span class="toggle-icon">📊</span>
+                <span class="toggle-text">More Info</span>
+            </button>
+        </div>
+
+        <!-- ВСИЧКО ОСТАНАЛО В СКРИВАЕМ КОНТЕЙНЕР -->
+        <div id="weekly-schedule-content" class="weekly-schedule-content hidden">
+            <!-- Loading индикатор -->
+            <div id="weekly-schedule-loading" class="weekly-schedule-loading hidden">
+                <span class="loading-spinner">⏳</span>
+                <span>Зарежда се...</span>
+            </div>
+
+            <!-- Контейнер за таблицата -->
+            <div id="weekly-schedule-table-container" class="weekly-schedule-table-container">
+                <table id="weekly-schedule-table" class="weekly-schedule-table">
+                    <thead>
+                    <tr>
+                        <th class="column-week">C.W.</th>
+                        <th class="column-hourly-rate">Working hours</th>
+                        <th class="column-total-hours">Тotal hours</th>
+                    </tr>
+                    </thead>
+                    <tbody id="weekly-schedule-tbody">
+                    <!-- Редовете ще се генерират динамично -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Обобщена информация -->
+            <div id="weekly-schedule-summary" class="weekly-schedule-summary">
+                <!-- Тук ще се показва обобщена информация за месеца -->
+            </div>
+
+            <!-- Съобщение за грешка -->
+            <div id="weekly-schedule-error" class="weekly-schedule-error hidden">
+                <!-- Съобщения за грешки ще се показват тук -->
+            </div>
+        </div>
+        </div>
+    <div id="employeeForm" class="hidden">
+        <div class="form-group">
+            <input type="text" id="name" placeholder=" " required class="form-control">
+            <label for="name">Name</label>
+        </div>
+        <div class="form-group">
+            <input type="text" id="lastname" placeholder=" " required class="form-control">
+            <label for="lastname">Lastname</label>
+        </div>
+        <div class="form-group">
+            <input type="text" id="email" placeholder=" " required class="form-control">
+            <label for="email">Email</label>
+        </div>
+        <div class="form-group">
+            <select id="position" required class="form-control">
+                <option value="" disabled selected>Position</option>
+                <option value="Cashier">Cashier</option>
+                <option value="Arranger">Arranger</option>
+                <option value="Deputy manager">Deputy manager</option>
+                <option value="Assistant store manager">Assistant store manager</option>
+                <option value="Manager">Manager</option>
+                <option value="Manager">Manager</option>
+            </select>
+            <label for="position">Position</label>
+        </div>
+
+        <div class="form-group">
+            <select id="hourlyRate" required class="form-control">
+                <option value="" disabled selected>Hourly Rate</option>
+                <option value="4">4</option>
+                <option value="6">6</option>
+                <option value="8">8</option>
+            </select>
+            <label for="hourlyRate">Hourly Rate</label>
+        </div>
+
+        <!-- НОВИ БУТОНИ: Submit и Cancel един до друг -->
+        <div class="button-group">
+            <button id="submitEmployee" type="button" class="icon-btn"><span>✔</span></button>
+            <button id="cancelEmployee" type="button" class="icon-btn" onclick="cancelEmployeeForm()"> <span>❌</span></button>
+        </div>
+    </div>
+
+    <form id="event-form">
+        <input type="hidden" id="selected-date">
+
+        <div class="form-group1">
+            <input type="time" id="start-time" name="start-time" required class="form-control1">
+            <label for="start-time">Shift Start Time</label>
+        </div>
+
+        <div class="form-group1">
+            <input type="time" id="end-time" name="end-time" required class="form-control1">
+            <label for="end-time">Shift End Time</label>
+        </div>
+
+        <div class="form-group1">
+            <select id="activityInput" class="form-control">
+                <option value="" disabled selected>Activity</option>
+                <option value="Cashier">Cashier</option>
+                <option value="Freshness Manager">Freshness Manager</option>
+                <option value="Stock Management Manager">Stock Management Manager</option>
+                <option value="Bake off">Bake off</option>
+                <option value="Stock Replenishment">Stock Replenishment</option>
+                <option value="Shift Leader">Shift Leader</option>
+            </select>
+            <label for="activityInput" class="floating-label">Activity:</label>
+        </div>
+
+        <!-- Меню за избор на тип отпуск -->
+        <div class="form-group1">
+            <select id="leaveType" class="form-control">
+                <option value="" selected>-- No Leave Selected --</option>
+                <option value="Day off">Day off</option>
+                <option value="Paid leave">Paid leave</option>
+                <option value="Unpaid leave">Unpaid leave</option>
+                <option value="Sick leave">Sick leave</option>
+                <option value="Maternity leave">Maternity leave</option>
+                <option value="Paternity leave">Paternity leave</option>
+            </select>
+            <label for="leaveType">Leave Type</label>
+        </div>
+
+        <button type="submit" id="saveEvent">Save</button>
+    </form>
+
+    <form id="edit-event-form" style="display: none;">
+        <input type="hidden" id="edit-event-id">
+        <input type="hidden" id="current-event-date">
+
+        <div class="form-group1">
+            <input type="time" id="edit-start-time" required class="form-control1">
+            <label for="edit-start-time">Shift Start Time</label>
+        </div>
+
+        <div class="form-group1">
+            <input type="time" id="edit-end-time" required class="form-control1">
+            <label for="edit-end-time">Shift End Time</label>
+        </div>
+
+        <div class="form-group1">
+            <select id="edit-activity" required class="form-control">
+                <option value="" disabled selected>Activity</option>
+                <option value="Cashier">Cashier</option>
+                <option value="Freshness Manager">Freshness Manager</option>
+                <option value="Stock Management Manager">Stock Management Manager</option>
+                <option value="Bake off">Bake off</option>
+                <option value="Stock Replenishment">Stock Replenishment</option>
+                <option value="Shift Leader">Shift Leader</option>
+            </select>
+            <label for="edit-activity" class="floating-label">Activity:</label>
+        </div>
+        <div class="form-actions">
+            <button type="submit" id="save-edit-btn">Update Event</button>
+            <button type="button" id="cancel-edit-btn" class="cancel-btn" onclick="cancelEventEditForm()">Cancel</button>
+            <!-- Remove - използва общата функция -->
+
+        </div>
+        <button type="button" id="remove-edit-btn" class="remove-btn" onclick="removeEventFromForm()">Remove</button>
+    </form>
+</div>
+
+<div id="calendar-container">
+    <div id="calendar"></div>
+</div>
+
+<!-- JavaScript файлове - зареждаме модулите в правилния ред -->
+<!-- ВАЖНО: validationManager.js се зарежда ПРЕДИ eventManager.js и calendarManager.js -->
+<script src="uiManager.js" defer></script>
+<script src="employeeManager.js" defer></script>
+<script src="validationManager.js" defer></script> <!-- НОВА ЛИНИЯ: Validation модула -->
+<script src="weeklyScheduleManager.js" defer></script>
+<script src="calendarManager.js" defer></script>
+<script src="eventManager.js" defer></script>
+<script src="app.js" defer></script>
+<script src="dailyHoursManager.js" defer></script>
+
+</body>
+</html>

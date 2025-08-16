@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Schedule</title>
+
+    <!-- FullCalendar CSS & JS -->
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.9.0/main.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.9.0/main.min.js"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        #calendar {
+            max-width: 1000px;
+            margin: auto;
+        }
+        .fc-daygrid-dot-event .fc-event-title {
+        background: #A6CDFF; /* Фон в светло синьо */
+        border-radius: 8px;  /* Заоблени ъгли */
+        padding: 5px;
+        }
+
+    </style>
+</head>
+<body>
+
+<h1>Employee Daily Schedule</h1>
+<div id="calendar"></div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+    let calendarEl = document.getElementById('calendar');
+
+    fetch('http://localhost:8080/events')
+        .then(res => res.json())
+        .then(events => {
+            console.log("Events fetched:", events);
+
+            if (!Array.isArray(events) || events.length === 0) {
+                console.warn("No events found");
+                return;
+            }
+
+            // Преобразуваме събитията за FullCalendar
+            let formattedEvents = events.map(event => ({
+                id: String(event.id),
+                title: event.employee.name, // Показване на името на служителя
+                start: event.start,
+                end: event.end,
+                backgroundColor: 'blue', // Син фон за събитията
+<!--                borderColor: 'blue', // Синя граница-->
+<!--                textColor: 'white' // Бял текст за контраст-->
+
+            }));
+
+            console.log("Formatted Events for FullCalendar:", formattedEvents);
+
+            let calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridDay',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridDay,dayGridWeek'
+                },
+                events: formattedEvents
+            });
+
+            calendar.render();
+        })
+        .catch(error => {
+            console.error('Error loading events:', error);
+        });
+});
+
+</script>
+
+
+</body>
+</html>
