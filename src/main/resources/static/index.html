@@ -8,6 +8,7 @@
     <script src="/webjars/fullcalendar/5.9.0/main.min.js"></script>
     <script src="/webjars/fullcalendar/5.9.0/interaction/main.min.js"></script>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="scheduleGenerator.css">
     <!-- jsPDF библиотека за генериране на PDF файлове -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
@@ -38,6 +39,14 @@
             <button id="scheduleBtn" onclick="goToHomePage()" data-tooltip="Home Schedule">
                 <span class="schedule-icon">📅</span></button>
         </div>
+    </div>
+
+    <!-- НОВА СЕКЦИЯ: Добави тук бутона за автоматично генериране -->
+    <div class="schedule-generation-container">
+        <button id="generate-schedule-btn" class="generate-schedule-btn" data-tooltip="Auto Generate Monthly Schedule">
+            <span class="generate-icon">🔄</span>
+            <span class="button-text">Generate Schedule</span>
+        </button>
     </div>
 
     <input type="text" id="searchInput" placeholder="Търси по име..." onkeyup="filterEmployees()" style="display: none;">
@@ -241,6 +250,6 @@
 <script src="eventManager.js" defer></script>
 <script src="app.js" defer></script>
 <script src="dailyHoursManager.js" defer></script>
-
+<script src="scheduleGenerator.js" defer></script>
 </body>
 </html>
