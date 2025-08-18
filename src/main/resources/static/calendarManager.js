@@ -331,33 +331,59 @@ async function handleEventDrop(info) {
         console.log('✅ Drag & drop event updated successfully in backend:', updatedEvent);
 
         // Премахваме loading индикатора
-        // НОВО - РЕФРЕШВАМЕ КАЛЕНДАРА:
+        event.setProp('title', event.title.replace(' (Updating...)', ''));
+        event.setExtendedProp('isUpdating', false);
+
+        // Обновяваме календара
         console.log('🔄 Refreshing calendar after drag & drop...');
         if (window.calendar) {
             window.calendar.refetchEvents();
             console.log('📅 Calendar refreshed with correct titles');
         }
 
+        // 🆕 ДИРЕКТНО ОБНОВЯВАНЕ НА СЕДМИЧНИТЕ ДАННИ (заобикаляме проверките)
+        try {
+            const employeeSelect = document.getElementById('employeeSelect');
+            const currentEmployeeId = employeeSelect ? employeeSelect.value : employeeId;
+            const employeeName = employeeSelect && employeeSelect.options[employeeSelect.selectedIndex]
+                ? employeeSelect.options[employeeSelect.selectedIndex].textContent.trim()
+                : 'Employee';
+
+            if (currentEmployeeId && typeof loadAndShowWeeklySchedule === 'function') {
+                console.log('🔄 Directly reloading weekly schedule after drag & drop...');
+
+                // Показваме weekly schedule контейнера ако е скрит
+                const weeklyContainer = document.getElementById('weekly-schedule-section');
+                if (weeklyContainer) {
+                    weeklyContainer.classList.remove('hidden');
+                }
+
+                // Директно презареждаме седмичните данни
+                await loadAndShowWeeklySchedule(currentEmployeeId, employeeName);
+                console.log('✅ Weekly schedule reloaded successfully after drag & drop');
+            } else {
+                console.warn('⚠️ Cannot reload weekly schedule - missing data or function');
+            }
+        } catch (error) {
+            console.error('❌ Error reloading weekly schedule:', error);
+        }
+
         // Показваме success съобщение
         showDragDropNotification('Event moved successfully!', 'success');
 
-        console.log('🎯 Drag & drop completed successfully with validation');
-
     } catch (error) {
-        console.error('❌ Error updating event via drag & drop:', error);
+        console.error('❌ Backend error during drag & drop:', error);
 
-        // Връщаме събитието на старата позиция при грешка
-        console.log('🔄 Reverting event to original position due to backend error');
+        // При грешка връщаме събитието на старата позиция
+        console.log('🔄 Reverting drag & drop due to backend error');
         info.revert();
+
+        // Премахваме loading индикатора
+        event.setProp('title', event.title.replace(' (Updating...)', ''));
+        event.setExtendedProp('isUpdating', false);
 
         // Показваме error съобщение
         showDragDropNotification('Failed to move event. Please try again.', 'error');
-
-        // Премахваме loading индикатора
-        if (window.calendar) {
-            window.calendar.refetchEvents();
-        }
-        event.setExtendedProp('isUpdating', false);
     }
 }
 
