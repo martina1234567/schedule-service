@@ -274,10 +274,25 @@ async function startScheduleGeneration() {
             showGenerationSuccess(result);
 
             // Опресняваме календара ако съществува
-            if (typeof refreshCalendar === 'function') {
+             if (typeof refreshCalendar === 'function') {
+                 setTimeout(() => {
+                     refreshCalendar();
+                 }, 1000);
+             }
+
+             // ДОБАВИ ТЕЗИ РЕДОВЕ:
+             // Обновяваме седмичните данни за избрания служител (ако има такъв)
+            const selectedEmployeeSelect = document.getElementById('employeeSelect');
+            if (selectedEmployeeSelect && selectedEmployeeSelect.value && typeof loadAndShowWeeklySchedule === 'function') {
+                const selectedEmployeeId = selectedEmployeeSelect.value;
+                const selectedEmployeeName = selectedEmployeeSelect.options[selectedEmployeeSelect.selectedIndex]?.text;
+
+                console.log(`🔄 Refreshing weekly data for employee: ${selectedEmployeeName} (ID: ${selectedEmployeeId})`);
+
                 setTimeout(() => {
-                    refreshCalendar();
-                }, 1000);
+                    console.log('📊 Calling loadAndShowWeeklySchedule to refresh sidebar data...');
+                    loadAndShowWeeklySchedule(selectedEmployeeId, selectedEmployeeName);
+                }, 2000); // Изчакваме 2 секунди за да се обнови календарът първо
             }
 
         } else {

@@ -24,6 +24,10 @@ public class ScheduleGeneratorService {
     @Autowired
     private EventRepository eventRepository;
 
+    // ДОБАВИ ТОЗИ РЕД:
+    @Autowired
+    private WeeklyScheduleService weeklyScheduleService;
+
     // Константи за смените
     private static final LocalTime FIRST_SHIFT_START = LocalTime.of(6, 0);
     private static final LocalTime FIRST_SHIFT_END = LocalTime.of(14, 30);
@@ -100,7 +104,20 @@ public class ScheduleGeneratorService {
         List<Event> generatedEvents = createEventsFromTracker(tracker);
         eventRepository.saveAll(generatedEvents);
 
-        // СТЪПКА 6: Финални статистики
+        // ДОБАВИ ТЕЗИ РЕДОВЕ:
+        // СТЪПКА 5.5: Обновяваме weekly_schedule таблицата за всички служители
+        System.out.println("🔄 Updating weekly schedule data for all employees...");
+        for (Employee employee : allEmployees) {
+            try {
+                weeklyScheduleService.getWeeklyScheduleForMonth(employee.getId(), year, month);
+                System.out.println(String.format("✅ Updated weekly schedule for %s", employee.getName()));
+            } catch (Exception e) {
+                System.err.println(String.format("❌ Failed to update weekly schedule for %s: %s",
+                        employee.getName(), e.getMessage()));
+            }
+        }
+
+// СТЪПКА 6: Финални статистики
         logFinalResults(tracker, generatedEvents);
 
         System.out.println(String.format("🎯 ГЕНЕРИРАНЕТО ЗАВЪРШИ! Създадени смени: %d", generatedEvents.size()));

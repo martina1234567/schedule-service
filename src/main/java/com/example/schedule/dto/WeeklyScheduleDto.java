@@ -51,6 +51,19 @@ public class WeeklyScheduleDto {
         this.workDaysCount = 0;
     }
 
+    public WeeklyScheduleDto(Long id, Long employeeId, String employeeName, LocalDate weekStartDate, LocalDate weekEndDate, Integer weekNumber, Integer year, BigDecimal plannedHours, BigDecimal breakHours, BigDecimal actualWorkHours) {
+        this.id = id;
+        this.employeeId = employeeId;
+        this.employeeName = employeeName;
+        this.weekStartDate = weekStartDate;
+        this.weekEndDate = weekEndDate;
+        this.weekNumber = weekNumber;
+        this.year = year;
+        this.plannedHours = plannedHours;
+        this.breakHours = breakHours;
+        this.actualWorkHours = actualWorkHours;
+    }
+
     public WeeklyScheduleDto(Long id, Long employeeId, String employeeName,
                              LocalDate weekStartDate, Integer weekNumber, Integer year,
                              BigDecimal plannedHours, BigDecimal breakHours, BigDecimal actualWorkHours) {

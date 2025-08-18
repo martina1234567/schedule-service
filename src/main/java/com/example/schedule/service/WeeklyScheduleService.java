@@ -66,7 +66,9 @@ public class WeeklyScheduleService {
     );
 
     /**
-     * Получава седмичните данни за служител за определен месец
+     * ОБНОВЕНА ГЛАВНА ФУНКЦИЯ: Получава седмичните данни за служител за месец
+     * НОВА ЛОГИКА: Винаги изчислява часовете директно от event таблицата (включва автоматично генерирани)
+     *
      * @param employeeId - ID на служителя
      * @param year - година
      * @param month - месец (1-12)
@@ -74,7 +76,7 @@ public class WeeklyScheduleService {
      */
     @Transactional(readOnly = true)
     public List<WeeklyScheduleDto> getWeeklyScheduleForMonth(Long employeeId, Integer year, Integer month) {
-        System.out.println(String.format("📅 Getting weekly schedule for employee %d, month %d/%d", employeeId, month, year));
+        System.out.println(String.format("📅 Getting weekly schedule for employee %d, month %d/%d (INCLUDING AUTO-GENERATED)", employeeId, month, year));
 
         // Намираме служителя
         Employee employee = employeeRepository.findById(employeeId)
@@ -87,26 +89,33 @@ public class WeeklyScheduleService {
         List<WeeklyScheduleDto> result = new ArrayList<>();
 
         for (LocalDate weekStart : weeksInMonth) {
-            // Проверяваме дали има запис в базата
-            Optional<WeeklySchedule> existingSchedule = weeklyScheduleRepository
-                    .findByEmployeeIdAndWeekStartDate(employeeId, weekStart);
+            // НОВА ЛОГИКА: ВИНАГИ изчисляваме часовете от event таблицата
+            WeeklyHours weeklyHours = calculateWeeklyHoursWithPaidLeave(employeeId, weekStart, employee);
 
-            WeeklyScheduleDto weekDto;
-            if (existingSchedule.isPresent()) {
-                // Използваме съществуващия запис
-                weekDto = convertToDto(existingSchedule.get());
-                System.out.println(String.format("✅ Found existing schedule for week %s: %s hours",
-                        weekStart, weekDto.getFormattedPlannedHours()));
-            } else {
-                // Създаваме нов DTO за седмица без график
-                weekDto = createEmptyWeekDto(employee, weekStart);
-                System.out.println(String.format("➕ Created empty week DTO for %s", weekStart));
-            }
+            Integer weekNumber = getWeekNumber(weekStart);
+            LocalDate weekEnd = weekStart.plusDays(6);
+
+            // Създаваме DTO с изчислените часове
+            WeeklyScheduleDto weekDto = new WeeklyScheduleDto(
+                    null, // ID не е нужно за frontend
+                    employeeId,
+                    employee.getName() + " " + employee.getLastname(),
+                    weekStart,
+                    weekEnd,
+                    weekNumber,
+                    year,
+                    weeklyHours.getWorkHours(),   // BigDecimal
+                    weeklyHours.getBreakHours(),  // BigDecimal
+                    weeklyHours.getWorkHours()    // BigDecimal
+            );
+
+            System.out.println(String.format("✅ Week %s: %.2f hours (from events - includes auto-generated)",
+                    weekStart, weeklyHours.getWorkHours().doubleValue()));
 
             result.add(weekDto);
         }
 
-        System.out.println(String.format("✅ Returning %d weekly schedules for employee %s",
+        System.out.println(String.format("✅ Returning %d weekly schedules for employee %s (calculated from events)",
                 result.size(), employee.getName()));
         return result;
     }
