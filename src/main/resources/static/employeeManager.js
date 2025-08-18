@@ -45,7 +45,7 @@ function setupEmployeeEventListeners() {
         // Ensure we're in add mode, not edit mode
         isEditMode = false;
         editingEmployeeId = null;
-        document.getElementById('submitEmployee').textContent = 'Add Employee';
+        document.getElementById('submitEmployee').textContent = '✔';
 
         // Clear any existing form data
         clearEmployeeForm();

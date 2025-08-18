@@ -801,7 +801,7 @@ function saveEmployeeFormState() {
             hourlyRate: document.getElementById('hourlyRate')?.value || '',
             isEditMode: window.isEditMode || false,
             editingEmployeeId: window.editingEmployeeId || null,
-            submitButtonText: document.getElementById('submitEmployee')?.textContent || 'Add Employee'
+            submitButtonText: document.getElementById('submitEmployee')?.textContent || '✔'
         };
 
         // Запазваме в sessionStorage

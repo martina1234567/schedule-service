@@ -94,10 +94,12 @@ function setupGlobalEventListeners() {
         // Close employee list if clicking outside
         const employeeListContainer = document.getElementById('employeeListContainer');
         const viewEmployeesBtn = document.getElementById('viewEmployeesBtn');
+        const searchInput = document.getElementById('searchInput'); // НОВА ЛИНИЯ: Добавяме референция към търсачката
 
         if (employeeListContainer && viewEmployeesBtn &&
             !employeeListContainer.contains(e.target) &&
-            !viewEmployeesBtn.contains(e.target)) {
+            !viewEmployeesBtn.contains(e.target) &&
+            e.target !== searchInput) { // НОВА ПРОВЕРКА: Изключваме кликове върху търсачката
             if (!employeeListContainer.classList.contains('hidden')) {
                 employeeListContainer.classList.add('hidden');
                 if (typeof toggleSearchVisibility === 'function') {

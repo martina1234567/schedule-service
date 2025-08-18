@@ -2340,3 +2340,34 @@ html body .fc-popover,
     max-height: calc(100vh - 60px);
     overflow-y: auto;
 }
+#sidebar-logo {
+    height: auto;
+    margin: 10px 0px 40px;
+    display: block;
+    transition: opacity 0.3s ease;
+}
+.sidebar-header {
+    margin-bottom: 10px; /* колкото разстояние искаш */
+}
+
+
+.sidebar-header {
+    display: flex;
+    align-items: center;         /* центрира по вертикала */
+    justify-content: space-between; /* лого вляво, стрелки вдясно */
+    padding: 5px 10px;
+}
+
+/* логото */
+#sidebar-logo {
+    height: 40px;   /* пробвай 40–50px */
+    width: auto;
+    position: absolute;
+    margin: 10px 0px 40px;
+}
+/* Когато sidebar е свит */
+#sidebar.collapsed #sidebar-logo {
+    opacity: 0;       /* скрива логото плавно */
+    visibility: hidden;
+     margin-bottom: 5px; /* по-малко разстояние */
+}
