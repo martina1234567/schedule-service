@@ -2304,3 +2304,29 @@ html body .fc-popover,
     margin-top: 12px !important;
     padding-top: 10px !important;
 }
+/* Общ стил за скролируемо popover тяло */
+.fc-popover-body.scrollable {
+  max-height: 150px !important;
+  overflow-y: auto !important;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+
+  /* по-красив скролер */
+  scrollbar-width: thin;
+  scrollbar-color: #888 #f1f1f1;
+}
+
+.fc-popover-body.scrollable::-webkit-scrollbar {
+  width: 8px;
+}
+.fc-popover-body.scrollable::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+.fc-popover-body.scrollable::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+.fc-popover-body.scrollable::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}

@@ -540,7 +540,7 @@ function showDragDropNotification(message, type = 'info') {
  * Решава проблеми с появяването на скролер в popover прозорчето
  */
 function addScrollToPopover() {
-    console.log('🔧 FIXED: Starting addScrollToPopover with height debugging...');
+    console.log('🔧 Starting addScrollToPopover...');
 
     try {
         let attempts = 0;
@@ -557,128 +557,35 @@ function addScrollToPopover() {
                     setTimeout(findAndProcessPopover, 100);
                     return;
                 }
-                console.error('❌ No popovers found after all attempts');
+                console.warn('❌ No popovers found after all attempts');
                 return;
             }
 
             popovers.forEach((popover, index) => {
                 const popoverBody = popover.querySelector('.fc-popover-body');
-
-                if (!popoverBody) {
-                    console.warn(`⚠️ No popover body found in popover ${index + 1}`);
-                    return;
-                }
+                if (!popoverBody) return;
 
                 const events = popoverBody.querySelectorAll('.fc-event');
                 const eventCount = events.length;
 
                 console.log(`📊 Found ${eventCount} events in popover ${index + 1}`);
 
-                // ИЗМЕРВАМЕ ВИСОЧИНИ ПРЕДИ ПРОМЯНА
-                const originalHeight = popoverBody.offsetHeight;
-                const originalScrollHeight = popoverBody.scrollHeight;
-
-                console.log(`📏 BEFORE - Height: ${originalHeight}px, ScrollHeight: ${originalScrollHeight}px`);
-
                 if (eventCount > 5) {
-                    console.log(`🎯 FIXING SCROLL for ${eventCount} events`);
-
-                    // СТЪПКА 1: Изчисляваме височината на едно събитие
-                    const firstEvent = events[0];
-                    const eventHeight = firstEvent ? firstEvent.offsetHeight : 30;
-                    const eventMargin = 4; // Приблизително margin между събитията
-                    const singleEventTotalHeight = eventHeight + eventMargin;
-
-                    console.log(`📐 Single event height: ${eventHeight}px + ${eventMargin}px margin = ${singleEventTotalHeight}px total`);
-
-                    // СТЪПКА 2: Изчисляваме колко събития искаме да покажем без скролер
-                    const visibleEvents = 3; // Показваме само 3 събития, останалите - скролер
-                    const calculatedMaxHeight = visibleEvents * singleEventTotalHeight + 20; // +20px за padding
-
-                    console.log(`🧮 Calculated maxHeight: ${visibleEvents} events × ${singleEventTotalHeight}px + 20px = ${calculatedMaxHeight}px`);
-
-                    // СТЪПКА 3: Използваме по-малката стойност между изчислената и 150px
-                    const finalMaxHeight = Math.min(calculatedMaxHeight, 150);
-
-                    console.log(`🎯 Final maxHeight will be: ${finalMaxHeight}px`);
-
-                    // СТЪПКА 4: Прилагаме стиловете с form-форсирана малка височина
-                    popoverBody.style.maxHeight = finalMaxHeight + 'px';
-                    popoverBody.style.overflowY = 'auto';
-                    popoverBody.style.overflowX = 'hidden';
-                    popoverBody.style.overscrollBehavior = 'contain';
-
-                    // Добавяме хубав скролер
-                    popoverBody.style.scrollbarWidth = 'thin';
-                    popoverBody.style.scrollbarColor = '#888 #f1f1f1';
-
-                    // За webkit браузъри
-                    const style = document.createElement('style');
-                    style.textContent = `
-                        .fc-popover-body::-webkit-scrollbar {
-                            width: 8px;
-                        }
-                        .fc-popover-body::-webkit-scrollbar-track {
-                            background: #f1f1f1;
-                            border-radius: 4px;
-                        }
-                        .fc-popover-body::-webkit-scrollbar-thumb {
-                            background: #888;
-                            border-radius: 4px;
-                        }
-                        .fc-popover-body::-webkit-scrollbar-thumb:hover {
-                            background: #555;
-                        }
-                    `;
-                    document.head.appendChild(style);
-
-                    // СТЪПКА 5: Проверяваме резултата след 100ms
-                    setTimeout(() => {
-                        const newHeight = popoverBody.offsetHeight;
-                        const newScrollHeight = popoverBody.scrollHeight;
-
-                        console.log(`📏 AFTER - Height: ${newHeight}px, ScrollHeight: ${newScrollHeight}px`);
-
-                        if (newScrollHeight > newHeight) {
-                            console.log('✅ SUCCESS: Scroll is now working - content is taller than container');
-                            console.log(`📊 Scrollable area: ${newScrollHeight - newHeight}px`);
-                        } else {
-                            console.log('⚠️ Still no scroll needed - trying even smaller height');
-
-                            // Ако все още няма скролер, използваме още по-малка височина
-                            const evenSmallerHeight = Math.min(100, finalMaxHeight - 30);
-                            popoverBody.style.maxHeight = evenSmallerHeight + 'px';
-
-                            console.log(`🔧 Trying smaller height: ${evenSmallerHeight}px`);
-
-                            setTimeout(() => {
-                                const finalHeight = popoverBody.offsetHeight;
-                                const finalScrollHeight = popoverBody.scrollHeight;
-                                console.log(`📏 FINAL - Height: ${finalHeight}px, ScrollHeight: ${finalScrollHeight}px`);
-
-                                if (finalScrollHeight > finalHeight) {
-                                    console.log('✅ SUCCESS: Scroll finally working!');
-                                } else {
-                                    console.log('❌ FAILED: Still no scroll - may need CSS inspection');
-                                }
-                            }, 100);
-                        }
-                    }, 100);
-
-                    console.log('✅ Scroll styles applied with calculated height');
-
+                    popoverBody.classList.add('scrollable');
+                    console.log('✅ Scrollable class applied');
                 } else {
-                    console.log(`ℹ️ No scroll needed - only ${eventCount} events`);
+                    popoverBody.classList.remove('scrollable');
+                    console.log('ℹ️ No scroll needed, class removed');
                 }
             });
         };
 
         findAndProcessPopover();
-
     } catch (error) {
         console.error('❌ Error in addScrollToPopover:', error);
     }
 }
+
 
 /**
  * НОВА ФУНКЦИЯ: Форсирано добавяне на скролер към всички popover елементи
