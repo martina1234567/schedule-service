@@ -2330,3 +2330,13 @@ html body .fc-popover,
 .fc-popover-body.scrollable::-webkit-scrollbar-thumb:hover {
   background: #555;
 }
+#employeeListContainer {
+    max-height: 600px; /* или колкото искаш според дизайна */
+    overflow-y: auto;  /* появява се вертикален скрол, когато е нужно */
+    padding-right: 5px; /* малко място за да не покрива скролът текста */
+}
+#calendar {
+    min-height: 600px;    /* минимална височина за месец */
+    max-height: calc(100vh - 60px);
+    overflow-y: auto;
+}
