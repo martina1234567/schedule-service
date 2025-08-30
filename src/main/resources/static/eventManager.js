@@ -311,11 +311,11 @@ function formatDateTimeForApi(dateStr, timeStr) {
 }
 
 /**
- * ФУНКЦИЯ ЗА ОБНОВЯВАНЕ НА СЪБИТИЕ
+ * ФУНКЦИЯ ЗА ОБНОВЯВАНЕ НА СЪБИТИЯ
  * Използва същата логика за datetime форматиране
  */
 async function handleEventUpdate() {
-    console.log('📝 Starting event update process...');
+    console.log('🔄 Starting event update process...');
 
     try {
         // Получаваме данните от формата
@@ -323,50 +323,45 @@ async function handleEventUpdate() {
         const startInput = document.getElementById('edit-start-time');
         const endInput = document.getElementById('edit-end-time');
         const activityInput = document.getElementById('edit-activity');
-        const leaveTypeInput = document.getElementById('leaveType');
         const date = document.getElementById('current-event-date').value;
 
         const startTime = startInput.value;
         const endTime = endInput.value;
         const activity = activityInput.value;
-        const leaveType = leaveTypeInput ? leaveTypeInput.value : '';
 
         console.log("📝 Updating event with data:", {
             eventId: eventId,
             startTime: startTime,
             endTime: endTime,
             activity: activity,
-            leaveType: leaveType,
             date: date
         });
 
-        // Основна валидация за работни събития (не за отпуски)
-        if (!leaveType) {
-            if (!startTime || !endTime) {
-                alert('Please fill in start and end time.');
-                return;
-            }
+        // Основна валидация
+        if (!startTime || !endTime) {
+            alert('Please fill in start and end time.');
+            return;
+        }
 
-            if (startTime >= endTime) {
-                alert('End time must be after start time.');
-                return;
-            }
+        if (startTime >= endTime) {
+            alert('End time must be after start time.');
+            return;
         }
 
         // Форматираме datetime strings за API с правилния формат
-        const start = formatDateTimeForApi(date, leaveType ? "00:00" : startTime);
-        const end = formatDateTimeForApi(date, leaveType ? "00:00" : endTime);
+        const start = formatDateTimeForApi(date, startTime);
+        const end = formatDateTimeForApi(date, endTime);
 
         console.log('🕐 Formatted update start time:', start);
-        console.log('🕐 Formatted update end time:', end);
+        console.log('🕑 Formatted update end time:', end);
 
         // Създаваме update payload
         const updateData = {
             id: eventId,
             start: start,
             end: end,
-            activity: leaveType ? null : activity,
-            leaveType: leaveType || null
+            activity: activity || null,
+            leaveType: null // Edit формата не поддържа leave types
         };
 
         console.log('📦 Update data prepared:', updateData);
@@ -406,7 +401,7 @@ async function handleEventUpdate() {
 
         // Обновяваме седмичната таблица
         const employeeSelect = document.getElementById('employeeSelect');
-        const employeeId = employeeSelect.value.trim();
+        const employeeId = employeeSelect ? employeeSelect.value.trim() : null;
 
         if (typeof refreshWeeklyScheduleForEmployee === 'function' && employeeId) {
             console.log('🔄 Refreshing weekly schedule after update...');
@@ -531,6 +526,12 @@ function cancelEventEditForm() {
             return; // Потребителят избра да продължи редактирането
         }
     }
+    // Показваме обратно employee select elements
+    const employeeSelect = document.getElementById('employeeSelect');
+    const selectLabel = document.querySelector('label[for="employeeSelect"]');
+
+    if (employeeSelect) employeeSelect.classList.remove('hidden');
+    if (selectLabel) selectLabel.classList.remove('hidden');
 
     // Потребителят потвърди отмяната или няма несъхранени промени
     console.log("✅ Cancelling edit form confirmed");

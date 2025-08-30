@@ -107,6 +107,10 @@ function initializeCalendar() {
 
         // Event loading
         events: function(fetchInfo, successCallback, failureCallback) {
+            // ПОПРАВКА: Почистваме преди всяко заземване
+            if (calendar) {
+                calendar.removeAllEvents();
+            }
             loadCalendarEvents(employeeSelect, successCallback, failureCallback);
         },
 
@@ -682,8 +686,10 @@ function updateEventTitle(info, isSingleEmployeeSelected) {
         }
     }
 
-    titleElement.textContent = displayTitle;
-    console.log(`🏷️ Event title updated: "${displayTitle}" (Single employee: ${isSingleEmployeeSelected})`);
+    if (titleElement.textContent !== displayTitle) {
+        titleElement.textContent = displayTitle;
+        console.log(`🔧 Fixed duplicate title: "${titleElement.textContent}" → "${displayTitle}"`);
+    }
 }
 
 /**
@@ -1213,6 +1219,7 @@ function handleEventEditButtons(info) {
 
     // Създаваме и добавяме delete бутон
     createDeleteButton(info, info.el.querySelector('.fc-event-title'));
+
 }
 
 /**
@@ -1397,7 +1404,20 @@ function createEditButton(info, titleElement) {
             if (addEmployeeBtn) addEmployeeBtn.classList.remove('hidden');
         }
 
-        // 3. Скриваме списъка със служители (ако е отворен)
+        // 3. НОВО: Скриваме employee select dropdown и неговия label
+        const employeeSelectForHiding = document.getElementById('employeeSelect');
+        const selectLabelForHiding = document.querySelector('label[for="employeeSelect"]');
+
+        if (employeeSelectForHiding) {
+            employeeSelectForHiding.classList.add('hidden');
+            console.log('🔒 Employee select hidden during event edit');
+        }
+        if (selectLabelForHiding) {
+            selectLabelForHiding.classList.add('hidden');
+            console.log('🔒 Employee select label hidden during event edit');
+        }
+
+        // 4. Скриваме списъка със служители (ако е отворен)
         const employeeListContainer = document.getElementById('employeeListContainer');
         if (employeeListContainer && !employeeListContainer.classList.contains('hidden')) {
             console.log('📒 Hiding employee list to show edit form');
@@ -1410,7 +1430,7 @@ function createEditButton(info, titleElement) {
             }
         }
 
-        // 4. Скриваме седмичната таблица (ако е отворена)
+        // 5. Скриваме седмичната таблица (ако е отворена)
         const weeklyScheduleSection = document.getElementById('weekly-schedule-section');
         if (weeklyScheduleSection && !weeklyScheduleSection.classList.contains('hidden')) {
             console.log('📒 Hiding weekly schedule to show edit form');
@@ -1459,18 +1479,45 @@ function createEditButton(info, titleElement) {
             const end = new Date(info.event.end);
             const dateOnly = start.toISOString().split('T')[0];
 
-            // Задаваме стойностите в полетата на формата
+            // Задаваме основните стойности в полетата на формата
             document.getElementById('edit-event-id').value = info.event.id;
             document.getElementById('edit-start-time').value = formatTimeForInput(start);
             document.getElementById('edit-end-time').value = formatTimeForInput(end);
-            document.getElementById('edit-activity').value = info.event.extendedProps.activity || '';
             document.getElementById('current-event-date').value = dateOnly;
 
-            // Активираме floating label за activity полето ако има стойност
+            // Задаваме activity стойността
+            const activityValue = info.event.extendedProps.activity || '';
             const activitySelect = document.getElementById('edit-activity');
-            const activityLabel = document.querySelector('label[for="edit-activity"]');
-            if (activitySelect.value && activityLabel) {
-                activityLabel.classList.add('floating');
+
+            console.log('🎯 Setting activity value:', activityValue);
+
+            if (activitySelect) {
+                // Първо изчистваме всички selected атрибути
+                Array.from(activitySelect.options).forEach(option => {
+                    option.selected = false;
+                });
+
+                // Задаваме стойността
+                activitySelect.value = activityValue;
+
+                // Принудително намираме и маркираме правилната опция като selected
+                const correctOption = Array.from(activitySelect.options).find(option =>
+                    option.value === activityValue
+                );
+
+                if (correctOption) {
+                    correctOption.selected = true;
+                    console.log('✅ Activity option selected:', correctOption.text);
+                } else {
+                    console.warn('⚠️ Activity option not found:', activityValue);
+                }
+
+                // Активираме floating label за activity полето ако има стойност
+                const activityLabel = document.querySelector('label[for="edit-activity"]');
+                if (activitySelect.value && activityLabel) {
+                    activityLabel.classList.add('floating');
+                    console.log('🏷️ Activity floating label activated');
+                }
             }
 
             // Показваме edit формата
@@ -1879,6 +1926,9 @@ function refreshCalendarEvents() {
 
         // НОВА ЛОГИКА: Почистваме всички leave стилове преди refresh
         cleanupAllLeaveStyles();
+
+        // ПОПРАВКА: Почистваме старите събития преди да добавим нови
+        calendar.removeAllEvents();
 
         // Refresh-ваме събитията
         calendar.refetchEvents();
@@ -2341,6 +2391,306 @@ function hideEventFormOnAddEmployee() {
         console.log('📒 Event form hidden due to Add Employee action');
     }
 }
+
+/**
+ * ===================================================================
+ * TOOLTIP MANAGEMENT ЗА COLLAPSED SIDEBAR БУТОНИ
+ * ===================================================================
+ *
+ * Този скрипт управлява показването на tooltip-и за бутоните
+ * когато sidebar-а е в collapsed режим.
+ */
+
+(function() {
+    'use strict';
+
+    console.log('🔧 Initializing tooltip management system...');
+
+    // Проверяваме дали сме в браузър
+    if (typeof document === 'undefined') {
+        console.warn('⚠️ Document not available - skipping tooltip initialization');
+        return;
+    }
+
+    /**
+     * Изчислява позицията на tooltip спрямо бутона
+     * @param {HTMLElement} button - Бутонът
+     * @returns {Object} - Обект с left и top координати
+     */
+    function calculateTooltipPosition(button) {
+        const buttonRect = button.getBoundingClientRect();
+        const tooltipOffset = 10;
+
+        // Основна позиция - дясно от бутона
+        let left = buttonRect.right + tooltipOffset;
+        let top = buttonRect.top + (buttonRect.height / 2);
+
+        // Проверяваме дали tooltip ще излезе извън viewport
+        const viewportWidth = window.innerWidth;
+        const estimatedTooltipWidth = 200; // Приблизителна ширина на tooltip
+
+        if (left + estimatedTooltipWidth > viewportWidth) {
+            // Показваме tooltip отляво от бутона
+            left = buttonRect.left - tooltipOffset - estimatedTooltipWidth;
+            return { left, top, position: 'left' };
+        }
+
+        return { left, top, position: 'right' };
+    }
+
+    /**
+     * Позиционира tooltip на правилното място
+     * @param {HTMLElement} tooltip - Tooltip елементът
+     * @param {HTMLElement} button - Бутонът
+     */
+    function positionTooltip(tooltip, button) {
+        const position = calculateTooltipPosition(button);
+
+        tooltip.style.left = position.left + 'px';
+        tooltip.style.top = position.top + 'px';
+
+        // Добавяме клас за позицията (за стрелката)
+        if (position.position === 'left') {
+            tooltip.classList.add('left-positioned');
+        } else {
+            tooltip.classList.remove('left-positioned');
+        }
+
+        console.log(`📍 Positioned tooltip at: left=${position.left}, top=${position.top}, position=${position.position}`);
+    }
+    /**
+     * Създава tooltip елемент за даден бутон
+     * @param {HTMLElement} button - Бутонът за който създаваме tooltip
+     * @param {string} text - Текстът на tooltip-а
+     * @returns {HTMLElement} - Създаденият tooltip елемент
+     */
+    function createTooltip(button, text) {
+        console.log(`📝 Creating tooltip for button with text: "${text}"`);
+
+        // Премахваме съществуващия tooltip ако има такъв
+        const existingTooltip = document.querySelector('.button-tooltip');
+        if (existingTooltip) {
+            existingTooltip.remove();
+        }
+
+        // Създаваме новия tooltip - добавяме го към body за максимален z-index
+        const tooltip = document.createElement('div');
+        tooltip.className = 'button-tooltip';
+        tooltip.textContent = text;
+
+        // Добавяме tooltip към body вместо към бутона
+        document.body.appendChild(tooltip);
+
+        // Позиционираме tooltip спрямо бутона
+        positionTooltip(tooltip, button);
+
+        return tooltip;
+    }
+
+    /**
+     * Показва tooltip за даден бутон
+     * @param {HTMLElement} button - Бутонът
+     * @param {string} text - Текстът на tooltip-а
+     */
+    function showTooltip(button, text) {
+        console.log(`👆 Showing tooltip for button: "${text}"`);
+
+        const tooltip = createTooltip(button, text);
+
+        // Малко забавяне за по-плавен ефект
+        setTimeout(() => {
+            tooltip.classList.add('show');
+        }, 50);
+    }
+
+    /**
+     * Скрива tooltip за даден бутон
+     * @param {HTMLElement} button - Бутонът
+     */
+    function hideTooltip(button) {
+        console.log('👇 Hiding tooltip');
+
+        // Търсим tooltip в целия документ
+        const tooltip = document.querySelector('.button-tooltip');
+        if (tooltip) {
+            tooltip.classList.remove('show');
+
+            // Премахваме tooltip след анимацията
+            setTimeout(() => {
+                if (tooltip.parentNode) {
+                    tooltip.remove();
+                }
+            }, 200);
+        }
+    }
+
+    /**
+     * Проверява дали sidebar-а е в collapsed режим
+     * @returns {boolean}
+     */
+    function isSidebarCollapsed() {
+        const sidebar = document.getElementById('sidebar');
+        return sidebar && sidebar.classList.contains('collapsed');
+    }
+
+    /**
+     * Добавя tooltip функционалност към бутон
+     * @param {HTMLElement} button - Бутонът
+     */
+    function addTooltipToButton(button) {
+        const tooltipText = button.getAttribute('data-tooltip');
+
+        if (!tooltipText) {
+            console.warn('⚠️ Button missing data-tooltip attribute:', button);
+            return;
+        }
+
+        console.log(`🔗 Adding tooltip functionality to button: ${button.id || 'unnamed'}`);
+
+        // Mouse enter event
+        button.addEventListener('mouseenter', function() {
+            if (isSidebarCollapsed()) {
+                console.log(`🖱️ Mouse enter on ${button.id || 'button'} - sidebar collapsed`);
+                showTooltip(button, tooltipText);
+            }
+        });
+
+        // Mouse leave event
+        button.addEventListener('mouseleave', function() {
+            if (isSidebarCollapsed()) {
+                console.log(`🖱️ Mouse leave on ${button.id || 'button'}`);
+                hideTooltip(button);
+            }
+        });
+
+        // Обновяваме позицията при scroll или resize
+        window.addEventListener('scroll', function() {
+            const tooltip = document.querySelector('.button-tooltip');
+            if (tooltip && isSidebarCollapsed()) {
+                positionTooltip(tooltip, button);
+            }
+        });
+
+        window.addEventListener('resize', function() {
+            const tooltip = document.querySelector('.button-tooltip');
+            if (tooltip && isSidebarCollapsed()) {
+                positionTooltip(tooltip, button);
+            }
+        });
+    }
+
+    /**
+     * Инициализира tooltip системата
+     */
+    function initializeTooltips() {
+        console.log('🚀 Initializing tooltips...');
+
+        // Селектираме всички бутони в sidebar, освен toggle бутона
+        const sidebar = document.getElementById('sidebar');
+        if (!sidebar) {
+            console.error('❌ Sidebar not found!');
+            return;
+        }
+
+        const buttons = sidebar.querySelectorAll('button:not(.sidebar-toggle)');
+        console.log(`🔍 Found ${buttons.length} buttons to add tooltips to`);
+
+        buttons.forEach((button, index) => {
+            console.log(`📌 Processing button ${index + 1}:`, button.id || 'unnamed');
+            addTooltipToButton(button);
+        });
+
+        console.log('✅ Tooltip initialization complete!');
+    }
+
+    /**
+     * Почиства всички tooltips когато sidebar се разширява
+     */
+    function cleanupTooltips() {
+        console.log('🧹 Cleaning up tooltips...');
+
+        const tooltips = document.querySelectorAll('.button-tooltip');
+        tooltips.forEach(tooltip => {
+            tooltip.remove();
+        });
+    }
+
+    /**
+     * Слуша за промени в sidebar състоянието
+     */
+    function watchSidebarChanges() {
+        const sidebar = document.getElementById('sidebar');
+        if (!sidebar) {
+            console.error('❌ Sidebar not found for watching changes!');
+            return;
+        }
+
+        // Използваме MutationObserver за да следим промени в class атрибута
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                    const isCollapsed = sidebar.classList.contains('collapsed');
+                    console.log(`📊 Sidebar state changed - collapsed: ${isCollapsed}`);
+
+                    if (!isCollapsed) {
+                        // Ако sidebar се разшири, почистваме tooltips
+                        cleanupTooltips();
+                    }
+                }
+            });
+        });
+
+        observer.observe(sidebar, {
+            attributes: true,
+            attributeFilter: ['class']
+        });
+
+        console.log('👀 Sidebar state observer initialized');
+    }
+
+    // ===================================================================
+    // INITIALIZATION
+    // ===================================================================
+
+    /**
+     * Главна функция за инициализация
+     */
+    function init() {
+        console.log('🎯 Starting tooltip system initialization...');
+
+        // Проверяваме дали DOM е готов
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                console.log('📄 DOM loaded - initializing tooltips');
+                initializeTooltips();
+                watchSidebarChanges();
+            });
+        } else {
+            console.log('📄 DOM already loaded - initializing tooltips immediately');
+            initializeTooltips();
+            watchSidebarChanges();
+        }
+    }
+
+    // Стартираме системата
+    init();
+
+    // ===================================================================
+    // EXPORT ЗА ГЛОБАЛЕН ДОСТЪП (ако е необходимо)
+    // ===================================================================
+
+    // Правим функциите достъпни глобално за debugging
+    window.TooltipManager = {
+        initialize: initializeTooltips,
+        cleanup: cleanupTooltips,
+        isSidebarCollapsed: isSidebarCollapsed,
+        showTooltip: showTooltip,
+        hideTooltip: hideTooltip
+    };
+
+    console.log('✨ Tooltip management system fully loaded!');
+
+})();
 
 // ЕКСПОРТИРАНЕ НА ФУНКЦИИ ЗА ГЛОБАЛНО ИЗПОЛЗВАНЕ
 window.clearCopyMode = clearCopyMode;

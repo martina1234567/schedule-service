@@ -432,7 +432,7 @@ margin-top: 1em; /* по желание */
 #sidebar.collapsed {
     width: 60px;
     padding: 30px 5px 10px 5px; /* Запазваме padding-top и за колапсирания режим */
-    overflow: hidden;
+    overflow: visible !important;
 }
 
 /* Toggle бутон за sidebar - в самия горен десен ъгъл */
@@ -605,22 +605,169 @@ margin-top: 1em; /* по желание */
     margin: 0;
 }
 
-/* Tooltip за колапсирани бутони */
+/* ===================================================================
+   FIX ЗА TOOLTIP ПОЗИЦИОНИНГ В COLLAPSED SIDEBAR - РАБОТЕЩО РЕШЕНИЕ
+   =================================================================== */
+/* ===================================================================
+   FIX ЗА TOOLTIP ПОЗИЦИОНИНГ В COLLAPSED SIDEBAR - РАБОТЕЩО РЕШЕНИЕ
+   =================================================================== */
+
+/* ПРЕМАХВАМЕ СТАРИЯ TOOLTIP КОД И ДОБАВЯМЕ НОВА ВЕРСИЯ */
+
+/* Първо, премахваме конфликтните стилове за tooltip */
 #sidebar.collapsed button:not(.sidebar-toggle):hover::after {
-    content: attr(data-tooltip);
+    display: none !important; /* Спираме стария tooltip */
+}
+
+#sidebar.collapsed button:not(.sidebar-toggle):hover::before {
+    display: none !important; /* Спираме старата стрелка */
+}
+
+/* ===================================================================
+   НОВ TOOLTIP МЕХАНИЗЪМ С JAVASCRIPT КОНТРОЛ
+   =================================================================== */
+
+/* Класове за новия tooltip - МАКСИМАЛЕН Z-INDEX */
+.button-tooltip {
+    position: fixed !important; /* Променено от absolute на fixed за най-горен слой */
+    background: rgba(0, 0, 0, 0.95) !important;
+    color: white !important;
+    padding: 8px 12px !important;
+    border-radius: 6px !important;
+    font-size: 12px !important;
+    white-space: nowrap !important;
+    z-index: 999999 !important; /* Максимален z-index */
+    pointer-events: none !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    opacity: 0 !important;
+    transform: scale(0.8) !important;
+    transition: all 0.2s ease !important;
+
+    /* Ще се позиционира с JavaScript */
+    left: 0;
+    top: 0;
+}
+
+/* Когато tooltip е показан - FIXED ПОЗИЦИОНИРАНЕ */
+.button-tooltip.show {
+    opacity: 1 !important;
+    transform: scale(1) !important;
+}
+
+/* Стрелка за tooltip - АДАПТИРАНО ЗА FIXED ПОЗИЦИЯ */
+.button-tooltip::before {
+    content: '';
     position: absolute;
-    left: 45px;
+    left: -6px; /* Позиционира стрелката отляво на tooltip */
     top: 50%;
     transform: translateY(-50%);
-    background: rgba(0, 0, 0, 0.8);
-    color: white;
-    padding: 5px 10px;
-    border-radius: 5px;
-    white-space: nowrap;
-    font-size: 12px;
-    z-index: 9999;
-    pointer-events: none;
+    width: 0;
+    height: 0;
+    border: 6px solid transparent;
+    border-right-color: rgba(0, 0, 0, 0.95);
+    z-index: 999998; /* Малко под tooltip но пак много високо */
 }
+
+/* ===================================================================
+   FORCE МАКСИМАЛНА ВИДИМОСТ ЗА TOOLTIP
+   =================================================================== */
+
+/* Премахваме всички възможни ограничения за видимост */
+body, html {
+    overflow-x: visible !important;
+}
+
+/* Всички контейнери трябва да позволяват overflow */
+#sidebar, #sidebar.collapsed, .button-container, .extra-buttons {
+    overflow: visible !important;
+}
+
+/* Форсираме tooltip да е над всичко */
+.button-tooltip {
+    position: fixed !important;
+    z-index: 2147483647 !important; /* Максималната стойност за z-index */
+    background: rgba(0, 0, 0, 0.95) !important;
+    color: white !important;
+    padding: 8px 12px !important;
+    border-radius: 6px !important;
+    font-size: 12px !important;
+    white-space: nowrap !important;
+    pointer-events: none !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    opacity: 0 !important;
+    transform: scale(0.8) !important;
+    transition: all 0.2s ease !important;
+
+    /* Гарантираме че ще е видим */
+    visibility: visible !important;
+    display: block !important;
+
+    /* Ще се позиционира с JavaScript */
+    left: 0;
+    top: 0;
+}
+
+/* ===================================================================
+   RESPONSIVE ПОЗИЦИОНИНГ ЗА МАЛКИ ЕКРАНИ
+   =================================================================== */
+
+@media (max-width: 768px) {
+    /* На малки екрани tooltip остава същия - ще се позиционира с JS */
+    .button-tooltip {
+        /* JavaScript ще реши къде да го позиционира */
+    }
+
+    /* Обръщаме стрелката за малки екрани */
+    .button-tooltip.left-positioned::before {
+        left: auto;
+        right: -6px;
+        border-right-color: transparent;
+        border-left-color: rgba(0, 0, 0, 0.95);
+    }
+}
+
+/* ===================================================================
+   МОДЕРЕН ДИЗАЙН ЗА TOOLTIP
+   =================================================================== */
+
+.button-tooltip {
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.95), rgba(30, 30, 30, 0.95));
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow:
+        0 4px 15px rgba(0, 0, 0, 0.3),
+        0 2px 5px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* ===================================================================
+   HOVER ЕФЕКТИ ЗА БУТОНИТЕ
+   =================================================================== */
+
+#sidebar.collapsed button:not(.sidebar-toggle):hover {
+    background-color: rgba(8, 83, 168, 1) !important; /* Тъмно син */
+    transform: scale(1.05) !important;
+    transition: all 0.2s ease !important;
+}
+
+/* ===================================================================
+   DEBUGGING СТИЛОВЕ (премахни при production)
+   =================================================================== */
+
+/* Временно - за да видим границите на бутоните */
+/*
+#sidebar.collapsed button:not(.sidebar-toggle) {
+    border: 2px solid red !important;
+    box-sizing: border-box !important;
+}
+
+.button-tooltip {
+    border: 2px solid lime !important;
+}
+*/
+
 #sidebar,
 #calendar-container,
 body {
