@@ -588,6 +588,9 @@ public class ValidationService {
         return null; // Валидно
     }
 
+    public void validateEvent(Event event) {
+    }
+
     /**
      * ВЪТРЕШЕН КЛАС: ValidationResult
      */

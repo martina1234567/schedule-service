@@ -258,7 +258,7 @@ async function handleEventCreation() {
                 textColor: newEvent.textColor,
                 extendedProps: {
                     employeeId: newEvent.employeeId,
-                    activity: newEvent.activity,
+                    activity: newEvent.activityName,
                     leaveType: newEvent.leaveType,
                     employeeName: newEvent.employeeName
                 }
@@ -307,7 +307,7 @@ function formatDateTimeForApi(dateStr, timeStr) {
     const [hours, minutes] = timeStr.split(':');
 
     // Връщаме във формат: YYYY-MM-DD HH:MM:SS (с интервал, не с T)
-    return `${year}-${month}-${day} ${hours}:${minutes}:00`;
+    return `${year}-${month}-${day}T${hours}:${minutes}:00`;
 }
 
 /**
@@ -386,37 +386,61 @@ async function handleEventUpdate() {
         const updatedEvent = await response.json();
         console.log('✅ Event updated successfully:', updatedEvent);
 
-        // Актуализираме събитието в календара
+        // ПОДОБРЕНО: По-надеждно актуализиране на календара
         if (window.calendar) {
+            console.log('🔄 Starting calendar update...');
+
             const calendarEvent = window.calendar.getEventById(eventId);
             if (calendarEvent) {
-                calendarEvent.setProp('title', updatedEvent.title);
-                calendarEvent.setStart(updatedEvent.start);
-                calendarEvent.setEnd(updatedEvent.end);
-                calendarEvent.setExtendedProp('activity', updatedEvent.activity);
-                calendarEvent.setExtendedProp('leaveType', updatedEvent.leaveType);
-                console.log('📅 Calendar event updated');
+                try {
+                    // Обновяваме свойствата на събитието
+                    calendarEvent.setProp('title', updatedEvent.title);
+                    calendarEvent.setStart(updatedEvent.start);
+                    calendarEvent.setEnd(updatedEvent.end);
+
+                    // ВАЖНО: Обновяваме activity в extendedProps правилно
+                    const activityName = updatedEvent.activityName || updatedEvent.activity;
+                    calendarEvent.setExtendedProp('activity', activityName);
+                    calendarEvent.setExtendedProp('leaveType', updatedEvent.leaveType);
+
+                    console.log('✅ Calendar event properties updated with activity:', activityName);
+                } catch (error) {
+                    console.warn('⚠️ Error updating individual event properties:', error);
+                }
             }
+
+            // Пълно обновяване на календара за сигурност
+            setTimeout(() => {
+                window.calendar.refetchEvents();
+                console.log('🔄 Full calendar refresh completed');
+            }, 150);
+
+            console.log('📅 Calendar event updated');
         }
 
-        // Обновяваме седмичната таблица
+        // ПОДОБРЕНО: По-надеждно обновяване на седмичната таблица
         const employeeSelect = document.getElementById('employeeSelect');
         const employeeId = employeeSelect ? employeeSelect.value.trim() : null;
 
         if (typeof refreshWeeklyScheduleForEmployee === 'function' && employeeId) {
             console.log('🔄 Refreshing weekly schedule after update...');
-            await refreshWeeklyScheduleForEmployee(employeeId);
-            console.log('✅ Weekly schedule updated after event update');
+            try {
+                await refreshWeeklyScheduleForEmployee(employeeId);
+                console.log('✅ Weekly schedule updated after event update');
+            } catch (error) {
+                console.warn('⚠️ Error refreshing weekly schedule:', error);
+            }
         }
 
         // Скриваме edit формата
         document.getElementById('edit-event-form').style.display = 'none';
+        console.log('📝 Edit form closed');
 
-        // Показваме success notification
+        // ПОДОБРЕНО: По-добро success съобщение
         if (typeof showDragDropNotification === 'function') {
             showDragDropNotification('Event updated successfully!', 'success');
         } else {
-            alert('Event updated successfully!');
+            alert('✅ Event updated successfully!');
         }
 
         console.log('🎉 Event update completed with all UI updates');
@@ -432,7 +456,6 @@ async function handleEventUpdate() {
         }
     }
 }
-
 /**
  * Изчиства формата и copy режима след успешно създаване
  */

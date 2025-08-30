@@ -315,6 +315,22 @@ function cleanupFormsOnEmployeeChange() {
     console.log('✅ Universal form cleanup completed');
 }
 
+// Инициализираме activity selects когато страницата е готова
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 Page loaded - initializing activity selects...');
+
+    // Използваме ID като value за новата структура
+    if (window.activityManager) {
+        window.activityManager.initialize(true) // true = използвай ID като value
+            .then(() => {
+                console.log('✅ Activity selects initialized successfully');
+            })
+            .catch(error => {
+                console.error('❌ Failed to initialize activity selects:', error);
+            });
+    }
+});
+
 // Export functions for debugging and external use
 window.closeAllForms = closeAllForms;
 window.performHealthCheck = performHealthCheck;
@@ -336,3 +352,4 @@ window.addEventListener('load', function() {
         console.error('❌ Module availability check failed');
     }
 });
+

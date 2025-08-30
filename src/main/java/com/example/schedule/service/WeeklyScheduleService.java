@@ -741,7 +741,7 @@ public class WeeklyScheduleService {
                     // Това е работен ден
                     LocalTime startTime = event.getStart().toLocalTime();
                     LocalTime endTime = event.getEnd().toLocalTime();
-                    String activity = event.getActivity();
+                    String activity = event.getActivityName();
 
                     dayDto = new DailyWorkHoursDto(currentDate, startTime, endTime, activity);
                     System.out.println(String.format("💼 %s: %s - %s (%s)",

@@ -173,14 +173,8 @@
         </div>
 
         <div class="form-group1">
-            <select id="activityInput" class="form-control">
-                <option value="" disabled selected>Activity</option>
-                <option value="Cashier">Cashier</option>
-                <option value="Freshness Manager">Freshness Manager</option>
-                <option value="Stock Management Manager">Stock Management Manager</option>
-                <option value="Bake off">Bake off</option>
-                <option value="Stock Replenishment">Stock Replenishment</option>
-                <option value="Shift Leader">Shift Leader</option>
+            <select id="activityInput" class="form-control activity-select">
+                <option value="" disabled selected>Loading activities...</option>
             </select>
             <label for="activityInput" class="floating-label">Activity:</label>
         </div>
@@ -217,14 +211,8 @@
         </div>
 
         <div class="form-group1">
-            <select id="edit-activity" required class="form-control">
-                <option value="" disabled>Activity</option>
-                <option value="Cashier">Cashier</option>
-                <option value="Freshness Manager">Freshness Manager</option>
-                <option value="Stock Management Manager">Stock Management Manager</option>
-                <option value="Bake off">Bake off</option>
-                <option value="Stock Replenishment">Stock Replenishment</option>
-                <option value="Shift Leader">Shift Leader</option>
+            <select id="edit-activity" required class="form-control activity-select">
+                <option value="" disabled selected>Loading activities...</option>
             </select>
             <label for="edit-activity" class="floating-label">Activity:</label>
         </div>
@@ -246,6 +234,7 @@
 <!-- ВАЖНО: validationManager.js се зарежда ПРЕДИ eventManager.js и calendarManager.js -->
 <script src="uiManager.js" defer></script>
 <script src="employeeManager.js" defer></script>
+<script src="activityManager.js" defer></script>
 <script src="validationManager.js" defer></script> <!-- НОВА ЛИНИЯ: Validation модула -->
 <script src="weeklyScheduleManager.js" defer></script>
 <script src="calendarManager.js" defer></script>

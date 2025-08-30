@@ -1485,9 +1485,18 @@ function createEditButton(info, titleElement) {
             document.getElementById('edit-end-time').value = formatTimeForInput(end);
             document.getElementById('current-event-date').value = dateOnly;
 
-            // Задаваме activity стойността
-            const activityValue = info.event.extendedProps.activity || '';
             const activitySelect = document.getElementById('edit-activity');
+            // Задаваме activity стойността
+            // ПОПРАВЕНО: Извличаме activity името правилно
+            let activityValue = '';
+            if (info.event.extendedProps.activity) {
+                activityValue = info.event.extendedProps.activity;
+            } else if (info.event.extendedProps.activityName) {
+                activityValue = info.event.extendedProps.activityName;  // Backup ако activity е в activityName
+            }
+
+            console.log('🎯 Activity value for edit form:', activityValue);
+            console.log('🔍 All extendedProps:', info.event.extendedProps);
 
             console.log('🎯 Setting activity value:', activityValue);
 
@@ -1502,14 +1511,21 @@ function createEditButton(info, titleElement) {
 
                 // Принудително намираме и маркираме правилната опция като selected
                 const correctOption = Array.from(activitySelect.options).find(option =>
-                    option.value === activityValue
+                    option.text === activityValue || option.value === activityValue
                 );
 
                 if (correctOption) {
                     correctOption.selected = true;
-                    console.log('✅ Activity option selected:', correctOption.text);
+                    activitySelect.value = correctOption.value; // Задаваме правилното ID
+                    console.log('✅ Activity option selected:', correctOption.text, 'with value:', correctOption.value);
                 } else {
-                    console.warn('⚠️ Activity option not found:', activityValue);
+                    console.warn('⚠️ Activity option not found for name:', activityValue);
+
+                    // DEBUG: Показваме всички налични опции
+                    console.log('Available options:');
+                    Array.from(activitySelect.options).forEach(option => {
+                        console.log(`  "${option.text}" (value: ${option.value})`);
+                    });
                 }
 
                 // Активираме floating label за activity полето ако има стойност
