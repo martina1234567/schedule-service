@@ -8,8 +8,6 @@ import com.example.schedule.repository.EventRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -411,7 +409,7 @@ public class ScheduleGeneratorService {
      * ПОМОЩНА ФУНКЦИЯ: Връща договорните часове на служител
      */
     private int getContractHours(Employee emp) {
-        return emp.getHourlyRate() != null ? emp.getHourlyRate() : 8;
+        return emp.getHourlyRate() != null ? emp.getHourlyRate().getDailyHours() : 8;
     }
 
     /**

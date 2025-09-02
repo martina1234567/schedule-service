@@ -2518,3 +2518,19 @@ html body .fc-popover,
     visibility: hidden;
      margin-bottom: 5px; /* по-малко разстояние */
 }
+
+.form-group select:focus + label,
+.form-group select:valid + label {
+  top: -0.6rem;
+  left: 0.4rem;
+  font-size: 0.8rem;
+  color: #007bff;
+}
+
+/* Специално за hourly rate select */
+#hourlyRate:not([value=""]) + label,
+#hourlyRate:valid + label {
+    top: -10px;
+    font-size: 12px;
+    color: #007bff;
+}

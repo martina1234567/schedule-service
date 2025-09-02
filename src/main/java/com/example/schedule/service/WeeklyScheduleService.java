@@ -372,10 +372,16 @@ public class WeeklyScheduleService {
      */
     private WeeklyHours calculateHoursFromPaidLeave(List<Event> paidLeaveEvents, Employee employee) {
         // Получаваме часовете дневно от договора (hourlyRate в този контекст означава часове дневно)
-        Integer dailyContractHours = employee.getHourlyRate();
-        if (dailyContractHours == null) {
+        Integer dailyContractHours;
+        if (employee.getHourlyRate() == null) {
             System.out.println("⚠️ Employee has no hourly rate set, defaulting to 8 hours per day");
             dailyContractHours = 8; // Default стойност
+        } else {
+            dailyContractHours = employee.getHourlyRate().getDailyHours();
+            if (dailyContractHours == null || dailyContractHours <= 0) {
+                System.out.println("⚠️ Invalid daily hours for employee, defaulting to 8 hours per day");
+                dailyContractHours = 8;
+            }
         }
 
         System.out.println(String.format("📋 Employee contract: %d hours per day", dailyContractHours));

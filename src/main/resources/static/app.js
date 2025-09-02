@@ -21,38 +21,97 @@ document.addEventListener('DOMContentLoaded', function() {
  * Main application initialization function
  * Coordinates the startup of all modules
  */
-function initializeApplication() {
+async function initializeApplication() {
     try {
-        // 1. Initialize UI Manager first (handles basic UI interactions)
+        console.log('🔧 Starting application initialization...');
+
+        // СТЪПКА 1: Initialize UI Manager first
         console.log('📱 Initializing UI Manager...');
-        initializeUIManager();
+        if (typeof initializeUIManager === 'function') {
+            try {
+                initializeUIManager();
+            } catch (error) {
+                console.error('Error in UI Manager:', error);
+            }
+        } else {
+            console.warn('⚠️ initializeUIManager function not available yet');
+        }
 
-        // 2. Initialize Employee Manager (handles employee CRUD operations)
+        // СТЪПКА 2: НОВО - Initialize Hourly Rate Manager
+        console.log('💰 Initializing Hourly Rate Manager...');
+        if (typeof initializeHourlyRateManager === 'function') {
+            await initializeHourlyRateManager();
+        } else {
+            console.warn('⚠️ initializeHourlyRateManager function not available yet');
+        }
+
+        // СТЪПКА 3: Initialize Employee Manager (зависи от hourly rates)
         console.log('👥 Initializing Employee Manager...');
-        initializeEmployeeManager();
+        if (typeof initializeEmployeeManager === 'function') {
+            await initializeEmployeeManager();
+        } else {
+            console.warn('⚠️ initializeEmployeeManager function not available yet');
+        }
 
-
-
-        // 4. Initialize Calendar (depends on employee data being available)
+        // СТЪПКА 4: Initialize Calendar
         console.log('📅 Initializing Calendar...');
-        initializeCalendar();
+        if (typeof initializeCalendar === 'function') {
+            initializeCalendar();
+        } else {
+            console.warn('⚠️ initializeCalendar function not available yet');
+        }
 
-        // 3. НОВА ЛИНИЯ: Initialize Weekly Schedule Manager (handles weekly hours table)
-                console.log('📊 Initializing Weekly Schedule Manager...');
-                initializeWeeklyScheduleManager();
+        // СТЪПКА 5: Initialize Weekly Schedule Manager
+        console.log('📊 Initializing Weekly Schedule Manager...');
+        if (typeof initializeWeeklyScheduleManager === 'function') {
+            initializeWeeklyScheduleManager();
+        } else {
+            console.warn('⚠️ initializeWeeklyScheduleManager function not available yet');
+        }
 
-        // 5. Initialize Event Manager (handles event creation and editing)
+        // СТЪПКА 6: Initialize Event Manager
         console.log('📋 Initializing Event Manager...');
-        initializeEventManager();
+        if (typeof initializeEventManager === 'function') {
+            initializeEventManager();
+        } else {
+            console.warn('⚠️ initializeEventManager function not available yet');
+        }
 
-        // 6. Set up any additional global event listeners
+        // НОВА СТЪПКА: Зареждаме hourly rates в select-а при стартиране
+        console.log('💰 Step 2: Load hourly rates into selects...');
+        if (typeof loadHourlyRatesIntoSelect === 'function') {
+            await loadHourlyRatesIntoSelect();
+        }
+        // СТЪПКА 7: Set up global event listeners
         setupGlobalEventListeners();
 
-        console.log('🎉 All modules initialized successfully');
+        console.log('🎉 All available modules initialized successfully');
 
     } catch (error) {
         console.error('❌ Error initializing application:', error);
-        alert('An error occurred while starting the application. Please refresh the page.');
+
+        // Show user-friendly error message
+        const errorDiv = document.createElement('div');
+        errorDiv.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #ff4444;
+            color: white;
+            padding: 15px;
+            border-radius: 5px;
+            z-index: 10000;
+            max-width: 300px;
+            font-family: Arial, sans-serif;
+        `;
+        errorDiv.textContent = 'Application failed to start. Please refresh the page.';
+        document.body.appendChild(errorDiv);
+
+        setTimeout(() => {
+            if (errorDiv.parentNode) {
+                errorDiv.parentNode.removeChild(errorDiv);
+            }
+        }, 5000);
     }
 }
 
@@ -60,6 +119,8 @@ function initializeApplication() {
  * Sets up global event listeners that don't belong to specific modules
  */
 function setupGlobalEventListeners() {
+    console.log('🔧 Setting up global event listeners...');
+
     // Handle window resize for responsive calendar
     window.addEventListener('resize', function() {
         // Debounce resize events
@@ -70,6 +131,20 @@ function setupGlobalEventListeners() {
                 window.calendar.updateSize();
             }
         }, 250);
+    });
+
+    // НОВО: Global listener за refresh на hourly rates когато е нужно
+    document.addEventListener('hourlyRatesChanged', async function() {
+        console.log('💰 Hourly rates changed - refreshing all selects...');
+
+        if (typeof populateAllHourlyRateSelects === 'function') {
+            try {
+                await populateAllHourlyRateSelects();
+                console.log('✅ All hourly rate selects refreshed successfully');
+            } catch (error) {
+                console.error('❌ Error refreshing hourly rate selects:', error);
+            }
+        }
     });
 
     // Handle global keyboard shortcuts
@@ -108,6 +183,8 @@ function setupGlobalEventListeners() {
             }
         }
     });
+
+    console.log('✅ Global event listeners set up successfully');
 }
 
 /**
@@ -132,7 +209,9 @@ function closeAllForms() {
     });
 
     // Hide search
-    toggleSearchVisibility(false);
+    if (typeof toggleSearchVisibility === 'function') {
+        toggleSearchVisibility(false);
+    }
 
     // Show default UI elements
     const elementsToShow = [
@@ -155,111 +234,8 @@ function closeAllForms() {
 }
 
 /**
- * Global error handler for unhandled promise rejections
+ * Universal cleanup function for forms when employee changes
  */
-window.addEventListener('unhandledrejection', function(event) {
-    console.error('Unhandled promise rejection:', event.reason);
-
-    // Show user-friendly error message
-    showNotification('An unexpected error occurred. Please try again.', 'error');
-
-    // Prevent the default browser behavior
-    event.preventDefault();
-});
-
-/**
- * Global error handler for JavaScript errors
- */
-window.addEventListener('error', function(event) {
-    console.error('JavaScript error:', event.error);
-
-    // Show user-friendly error message for critical errors
-    if (event.error && event.error.message) {
-        showNotification('A technical error occurred. Please refresh the page.', 'error');
-    }
-});
-
-/**
- * Application health check
- * Verifies that all required DOM elements are present
- */
-function performHealthCheck() {
-    const requiredElements = [
-        'calendar',
-        'employeeSelect',
-        'addEmployeeBtn',
-        'viewEmployeesBtn',
-        'employeeForm',
-        'event-form',
-        'edit-event-form',
-        'employeeListContainer',
-        'weekly-schedule-section'  // НОВА ЛИНИЯ: Проверка за седмичната секция
-    ];
-
-    const missingElements = [];
-
-    requiredElements.forEach(elementId => {
-        const element = document.getElementById(elementId);
-        if (!element) {
-            missingElements.push(elementId);
-        }
-    });
-
-    if (missingElements.length > 0) {
-        console.error('❌ Missing required DOM elements:', missingElements);
-        return false;
-    }
-
-    console.log('✅ All required DOM elements are present');
-    return true;
-}
-
-/**
- * Utility function to check if all required modules are loaded
- */
-function checkModuleAvailability() {
-    const requiredFunctions = [
-        'initializeUIManager',
-        'initializeEmployeeManager',
-        'initializeWeeklyScheduleManager',  // НОВА ЛИНИЯ: Проверка за седмичния модул
-        'initializeCalendar',
-        'initializeEventManager'
-    ];
-
-    const missingFunctions = [];
-
-    requiredFunctions.forEach(functionName => {
-        if (typeof window[functionName] !== 'function') {
-            missingFunctions.push(functionName);
-        }
-    });
-
-    if (missingFunctions.length > 0) {
-        console.error('❌ Missing required functions:', missingFunctions);
-        return false;
-    }
-
-    console.log('✅ All required modules are available');
-    return true;
-}
-
-/**
- * Debug function to log application state
- * Useful for troubleshooting
- */
-function logApplicationState() {
-    console.log('📊 Application State Debug Info:');
-    console.log('- Calendar initialized:', !!window.calendar);
-    console.log('- Employee select value:', document.getElementById('employeeSelect')?.value);
-    console.log('- Current forms visible:', {
-        employeeForm: !document.getElementById('employeeForm')?.classList.contains('hidden'),
-        eventForm: document.getElementById('event-form')?.style.display !== 'none',
-        editForm: document.getElementById('edit-event-form')?.style.display !== 'none',
-        weeklySchedule: !document.getElementById('weekly-schedule-section')?.classList.contains('hidden')  // НОВА ЛИНИЯ
-    });
-    console.log('- Employee list items:', document.getElementById('employeeList')?.children.length);
-    console.log('- Weekly schedule visible:', typeof isWeeklyScheduleVisible === 'function' ? isWeeklyScheduleVisible() : 'unknown');  // НОВА ЛИНИЯ
-}
 function cleanupFormsOnEmployeeChange() {
     console.log('🧹 Universal cleanup of forms due to employee change...');
 
@@ -315,6 +291,160 @@ function cleanupFormsOnEmployeeChange() {
     console.log('✅ Universal form cleanup completed');
 }
 
+/**
+ * Global error handler for unhandled promise rejections
+ */
+window.addEventListener('unhandledrejection', function(event) {
+    console.error('Unhandled promise rejection:', event.reason);
+
+    // Show user-friendly error message
+    if (typeof showNotification === 'function') {
+        showNotification('An unexpected error occurred. Please try again.', 'error');
+    }
+
+    // Prevent the default browser behavior
+    event.preventDefault();
+});
+
+/**
+ * Global error handler for JavaScript errors
+ */
+window.addEventListener('error', function(event) {
+    console.error('JavaScript error:', event.error);
+
+    // Show user-friendly error message for critical errors
+    if (event.error && event.error.message) {
+        if (typeof showNotification === 'function') {
+            showNotification('A technical error occurred. Please refresh the page.', 'error');
+        }
+    }
+});
+
+/**
+ * Application health check
+ * Verifies that all required DOM elements are present
+ * ПОПРАВЕНО: Не блокира стартирането, само логва предупреждения
+ */
+function performHealthCheck() {
+    const criticalElements = [
+        'calendar'  // Само наистина критичните елементи
+    ];
+
+    // Опционални елементи - не блокират стартирането
+    const optionalElements = [
+        'employeeSelect',
+        'addEmployeeBtn',
+        'viewEmployeesBtn',
+        'employeeForm',
+        'event-form',
+        'edit-event-form',
+        'employeeListContainer',
+        'weekly-schedule-section'
+    ];
+
+    const missingCritical = [];
+    const missingOptional = [];
+
+    // Проверяваме критичните елементи
+    criticalElements.forEach(elementId => {
+        const element = document.getElementById(elementId);
+        if (!element) {
+            missingCritical.push(elementId);
+        }
+    });
+
+    // Проверяваме опционалните елементи
+    optionalElements.forEach(elementId => {
+        const element = document.getElementById(elementId);
+        if (!element) {
+            missingOptional.push(elementId);
+        }
+    });
+
+    // Логваме резултатите
+    if (missingCritical.length > 0) {
+        console.warn('⚠️ Missing critical DOM elements:', missingCritical);
+    } else {
+        console.log('✅ All critical DOM elements are present');
+    }
+
+    if (missingOptional.length > 0) {
+        console.warn('⚠️ Missing optional DOM elements (app will continue):', missingOptional);
+    }
+
+    // ВИНАГИ връщаме true - не блокираме стартирането
+    return true;
+}
+
+/**
+ * Utility function to check if all required modules are loaded
+ * ПОПРАВЕНО: Не блокира стартирането, само логва информация
+ */
+function checkModuleAvailability() {
+    const expectedFunctions = [
+        'initializeUIManager',
+        'initializeEmployeeManager',
+        'initializeHourlyRateManager',  // НОВО: Добавен hourly rate manager
+        'initializeWeeklyScheduleManager',  // НОВА ЛИНИЯ: Проверка за седмичния модул
+        'initializeCalendar',
+        'initializeEventManager',
+        'filterEmployees'
+    ];
+
+    const availableFunctions = [];
+    const missingFunctions = [];
+
+    expectedFunctions.forEach(functionName => {
+        if (typeof window[functionName] === 'function') {
+            availableFunctions.push(functionName);
+        } else {
+            missingFunctions.push(functionName);
+        }
+    });
+
+    console.log('✅ Available functions:', availableFunctions);
+
+    if (missingFunctions.length > 0) {
+        console.warn('⚠️ Missing functions (app will continue):', missingFunctions);
+    }
+
+    // ВИНАГИ връщаме true - приложението ще продължи дори с липсващи модули
+    return true;
+}
+
+/**
+ * Debug function to log application state
+ * Useful for troubleshooting
+ */
+function logApplicationState() {
+    console.log('📊 Application State Debug Info:');
+    console.log('- Calendar initialized:', !!window.calendar);
+    console.log('- Employee select value:', document.getElementById('employeeSelect')?.value);
+    console.log('- Current forms visible:', {
+        employeeForm: !document.getElementById('employeeForm')?.classList.contains('hidden'),
+        eventForm: document.getElementById('event-form')?.style.display !== 'none',
+        editForm: document.getElementById('edit-event-form')?.style.display !== 'none',
+        weeklySchedule: !document.getElementById('weekly-schedule-section')?.classList.contains('hidden')  // НОВА ЛИНИЯ
+    });
+    console.log('- Employee list items:', document.getElementById('employeeList')?.children.length);
+    console.log('- Weekly schedule visible:', typeof isWeeklyScheduleVisible === 'function' ? isWeeklyScheduleVisible() : 'unknown');  // НОВА ЛИНИЯ
+}
+
+/**
+ * Fallback notification function
+ */
+function showNotification(message, type = 'info') {
+    console.log(`📢 Notification (${type}): ${message}`);
+
+    if (type === 'error') {
+        alert('Error: ' + message);
+    } else if (type === 'success') {
+        alert('Success: ' + message);
+    } else {
+        console.log('Info: ' + message);
+    }
+}
+
 // Инициализираме activity selects когато страницата е готова
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 Page loaded - initializing activity selects...');
@@ -337,19 +467,25 @@ window.performHealthCheck = performHealthCheck;
 window.checkModuleAvailability = checkModuleAvailability;
 window.logApplicationState = logApplicationState;
 window.cleanupFormsOnEmployeeChange = cleanupFormsOnEmployeeChange;
+window.initializeApplication = initializeApplication;
+window.setupGlobalEventListeners = setupGlobalEventListeners;
+
+// Fallback functions
+if (typeof window.showNotification !== 'function') {
+    window.showNotification = showNotification;
+}
 
 // Application ready indicator
 window.addEventListener('load', function() {
     console.log('🎯 Application fully loaded and ready');
 
-    // Perform health check
-    if (!performHealthCheck()) {
-        console.error('❌ Application health check failed');
-    }
+    // Perform health check - НЕ блокира стартирането
+    performHealthCheck();
 
-    // Check module availability
-    if (!checkModuleAvailability()) {
-        console.error('❌ Module availability check failed');
-    }
+    // Check module availability - НЕ блокира стартирането
+    checkModuleAvailability();
+
+    console.log('🚀 Application startup checks completed');
 });
 
+console.log('✅ App.js main controller loaded successfully');

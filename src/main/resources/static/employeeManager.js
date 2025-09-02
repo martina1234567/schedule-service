@@ -12,15 +12,19 @@ let editingEmployeeId = null; // ID of the employee being edited
  * Initializes employee management functionality
  * Sets up event listeners and loads initial data
  */
-function initializeEmployeeManager() {
-    // Load employees when the page starts
-    loadEmployees();
+async function initializeEmployeeManager() {
+    console.log('👥 Initializing Employee Manager...');
 
-    // Set up event listeners for employee-related buttons
+    // 1. Зареждаме служителите
+    await loadEmployees();
+
+    // 2. НОВО: Зареждаме hourly rates в dropdown-а
+    await populateAllHourlyRateSelects();
+
+    // 3. Настройваме event listeners
     setupEmployeeEventListeners();
 
-    // Initialize form validation and UI behaviors
-    initializeFormBehaviors();
+    console.log('✅ Employee Manager initialized successfully');
 }
 
 /**
@@ -99,50 +103,77 @@ function setupEmployeeEventListeners() {
  * ОБНОВЕНА ФУНКЦИЯ: Handles employee form submission for both create and update operations
  * Сега включва изчистване на запазеното състояние след успешен submit
  */
-function handleEmployeeSubmit() {
+async function handleEmployeeSubmit() {
+    console.log('📝 Processing employee form submission...');
+
     // Get form field values
     const name = document.getElementById('name').value;
     const lastname = document.getElementById('lastname').value;
     const email = document.getElementById('email').value;
     const position = document.getElementById('position').value;
-    const hourlyRate = document.getElementById('hourlyRate').value;
+    const hourlyRateId = document.getElementById('hourlyRate').value; // НОВО: Вземаме ID вместо име
 
     // Validate that all fields are filled
-    if (name && lastname && email && position && hourlyRate) {
+    if (name && lastname && email && position && hourlyRateId) {
+
         // Determine if we're creating or updating
         let requestUrl = 'http://localhost:8080/employees';
-        let method = 'POST'; // Default for creating new employee
+        let method = 'POST';
 
-        // If in edit mode, change to PUT request with specific ID
         if (isEditMode && editingEmployeeId) {
             requestUrl = `http://localhost:8080/employees/${editingEmployeeId}`;
             method = 'PUT';
         }
 
-        // Send request to backend API
-        fetch(requestUrl, {
-            method: method,
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                name: name,
-                lastname: lastname,
-                email: email,
-                position: position,
-                hourlyRate: hourlyRate
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            // Show success message based on operation type
-            if (isEditMode) {
-                alert(`Employee updated successfully: ${data.name} ${data.lastname}`);
-            } else {
-                alert(`Employee added successfully: ${data.name} ${data.lastname}`);
+        try {
+            // ПОПРАВЕНО: Сега изпращаме само основните данни БЕЗ hourlyRate в body
+            const response = await fetch(requestUrl, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    name: name,
+                    lastname: lastname,
+                    email: email,
+                    position: position
+                    // НЕ ИЗПРАЩАМЕ hourlyRate в DTO-то
+                })
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`HTTP ${response.status}: ${errorText}`);
             }
 
-            // НОВА ФУНКЦИОНАЛНОСТ: Изчистваме запазеното състояние след успешен submit
+            const savedEmployee = await response.json();
+            console.log('✅ Employee saved successfully:', savedEmployee);
+
+            // СТЪПКА 2: Ако служителят е записан успешно, присвояваме hourly rate отделно
+            if (hourlyRateId && hourlyRateId !== '') {
+                try {
+                    const assignResponse = await fetch(`http://localhost:8080/employees/${savedEmployee.id}/hourly-rate/${hourlyRateId}`, {
+                        method: 'PUT'
+                    });
+
+                    if (assignResponse.ok) {
+                        console.log(`✅ Hourly rate ${hourlyRateId} assigned to employee ${savedEmployee.id}`);
+                    } else {
+                        console.warn(`⚠️ Failed to assign hourly rate: ${assignResponse.statusText}`);
+                    }
+                } catch (error) {
+                    console.warn('⚠️ Error assigning hourly rate:', error);
+                }
+            }
+
+            // Show success message
+            if (isEditMode) {
+                alert(`Employee updated successfully: ${savedEmployee.name} ${savedEmployee.lastname}`);
+            } else {
+                alert(`Employee added successfully: ${savedEmployee.name} ${savedEmployee.lastname}`);
+            }
+
+            // Clear saved form state after successful submission
             if (typeof clearAllSavedFormsState === 'function') {
                 clearAllSavedFormsState();
                 console.log('🗑️ Cleared saved form state after successful employee submission');
@@ -150,70 +181,203 @@ function handleEmployeeSubmit() {
 
             // Reset form and reload employee list
             resetEmployeeForm();
-            loadEmployees();
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            // При грешка НЕ изчистваме запазеното състояние, за да може потребителят да опита пак
-        });
+            await loadEmployees();
+
+        } catch (error) {
+            console.error('❌ Error saving employee:', error);
+            alert('Error saving employee: ' + error.message);
+        }
+
     } else {
         alert('All fields are required!');
-        // При validation грешка също НЕ изчистваме запазеното състояние
+        console.warn('⚠️ Form validation failed - missing required fields');
+    }
+}
+/**
+ * НОВА ФУНКЦИЯ: Популира всички hourly rate select елементи
+ * Може да се използва и за refresh на select-ите
+ */
+async function populateAllHourlyRateSelects() {
+    console.log('💰 Populating all hourly rate selects...');
+
+    const selectIds = ['hourlyRate']; // Добави други ID-та на select елементи тук ако има такива
+
+    for (const selectId of selectIds) {
+        const selectElement = document.getElementById(selectId);
+        if (selectElement) {
+            await loadHourlyRatesIntoSelectElement(selectElement);
+        }
+    }
+}
+
+/**
+ * ПОМОЩНА ФУНКЦИЯ: Зарежда hourly rates в конкретен select елемент
+ */
+async function loadHourlyRatesIntoSelectElement(selectElement) {
+    if (!selectElement) return;
+
+    try {
+        // Показваме loading индикатор
+        const originalHTML = selectElement.innerHTML;
+        selectElement.innerHTML = '<option value="" disabled selected>Loading rates...</option>';
+
+        // Правим заявка към backend
+        const response = await fetch('/api/hourly-rates/active');
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const hourlyRates = await response.json();
+
+        // Изчистваме и добавяме опциите
+        selectElement.innerHTML = '<option value="" disabled selected>Select hourly rate...</option>';
+
+        hourlyRates.forEach(rate => {
+            const option = document.createElement('option');
+            option.value = rate.id;
+            option.textContent = `${rate.rateName} (${rate.dailyHours}h/day)`;
+            selectElement.appendChild(option);
+        });
+
+        console.log(`✅ Successfully populated select #${selectElement.id} with ${hourlyRates.length} hourly rates`);
+
+    } catch (error) {
+        console.error(`❌ Error loading hourly rates for select #${selectElement.id}:`, error);
+        selectElement.innerHTML = '<option value="" disabled selected>Error loading rates</option>';
+    }
+}
+/**
+ * НОВА ПОМОЩНА ФУНКЦИЯ: Зарежда hourly rates в select елемента
+ * Тази функция ще се извиква когато е нужно да се попълни select-ът
+ */
+async function loadHourlyRatesIntoSelect() {
+    console.log('💰 Loading hourly rates into select...');
+
+    const hourlyRateSelect = document.getElementById('hourlyRate');
+    if (!hourlyRateSelect) {
+        console.error('❌ Hourly rate select element not found');
+        return;
+    }
+
+    try {
+        // Показваме loading индикатор
+        hourlyRateSelect.innerHTML = '<option value="" disabled selected>Loading rates...</option>';
+
+        // Правим заявка към backend за активните hourly rates
+        const response = await fetch('/api/hourly-rates/active');
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const hourlyRates = await response.json();
+        console.log('📋 Loaded hourly rates:', hourlyRates);
+
+        // Изчистваме select-а
+        hourlyRateSelect.innerHTML = '<option value="" disabled selected>Select hourly rate...</option>';
+
+        // Добавяме опциите
+        hourlyRates.forEach(rate => {
+            const option = document.createElement('option');
+            option.value = rate.id;
+            option.textContent = `${rate.rateName} (${rate.dailyHours}h/day)`;
+            hourlyRateSelect.appendChild(option);
+        });
+
+        console.log(`✅ Successfully loaded ${hourlyRates.length} hourly rates into select`);
+
+    } catch (error) {
+        console.error('❌ Error loading hourly rates:', error);
+        hourlyRateSelect.innerHTML = '<option value="" disabled selected>Error loading rates</option>';
     }
 }
 
 /**
  * Loads all employees from the backend and populates both dropdown and list
  */
-function loadEmployees() {
-    const employeeSelect = document.getElementById('employeeSelect');
+async function loadEmployees() {
+    console.log('📡 Loading employees from backend...');
 
-    // Fetch employees from backend API
-    fetch('http://localhost:8080/employees')
-        .then(response => response.json())
-        .then(data => {
-            console.log("👥 Loaded employees from backend:", data);
+    try {
+        const response = await fetch('http://localhost:8080/employees');
 
-            // Populate dropdown select element with "All Employees" option first
-            employeeSelect.innerHTML = '<option value="">📋 All Employees</option>';
-            data.forEach(employee => {
-                let option = document.createElement('option');
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const employees = await response.json();
+        console.log('✅ Loaded employees:', employees);
+
+        // Populate employee select dropdown
+        const employeeSelect = document.getElementById('employeeSelect');
+        if (employeeSelect) {
+            employeeSelect.innerHTML = '<option value="" disabled selected>Select Employee</option>';
+
+            employees.forEach(employee => {
+                const option = document.createElement('option');
                 option.value = employee.id;
-                // Use the exact same format as the backend returns
-                const fullName = `${employee.name} ${employee.lastname}`;
-                option.textContent = fullName;
+                option.textContent = `${employee.name} ${employee.lastname}`;
                 employeeSelect.appendChild(option);
-
-                console.log(`➕ Added employee option: "${fullName}" (ID: ${employee.id})`);
             });
+        }
 
-            // Populate employee list for management view
-            populateEmployeeList(data);
+        // ПОПРАВКА: Използваме новата async функция за списъка
+        await populateEmployeeList(employees);
 
-            console.log("✅ Employees loaded successfully");
-        })
-        .catch(error => console.error('❌ Error loading employees:', error));
+        console.log(`✅ Successfully loaded and displayed ${employees.length} employees`);
+
+    } catch (error) {
+        console.error('❌ Error loading employees:', error);
+        alert('Error loading employees: ' + error.message);
+    }
 }
-
 /**
  * Populates the employee list with edit and delete buttons
  * @param {Array} employees - Array of employee objects
  */
-function populateEmployeeList(employees) {
+/**
+ * ПОПРАВЕНА: Populates the employee list with edit and delete buttons
+ * Сега правилно зарежда hourly rate ID за всеки служител
+ */
+async function populateEmployeeList(employees) {
     const employeeList = document.getElementById('employeeList');
     employeeList.innerHTML = ''; // Clear existing list
 
-    employees.forEach(employee => {
+    for (const employee of employees) {
+        console.log(`🔍 Loading hourly rate for employee: ${employee.name} ${employee.lastname} (ID: ${employee.id})`);
+
+        let hourlyRateId = null;
+
+        try {
+            // Правим заявка за пълните данни включително hourly rate
+            const detailResponse = await fetch(`http://localhost:8080/employees/${employee.id}/with-hourly-rate`);
+
+            if (detailResponse.ok) {
+                const fullData = await detailResponse.json();
+                console.log('🔍 DEBUG Full response:', fullData);
+                if (fullData.hourlyRate && fullData.hourlyRate.id) {
+                    hourlyRateId = fullData.hourlyRate.id;
+                    console.log(`✅ Found hourly rate ID ${hourlyRateId} for employee ${employee.id}`);
+                } else {
+                    console.log(`ℹ️ No hourly rate found for employee ${employee.id}`);
+                }
+            } else {
+                console.warn(`⚠️ HTTP ${detailResponse.status} for employee ${employee.id}`);
+            }
+        } catch (error) {
+            console.warn(`⚠️ Error loading hourly rate for employee ${employee.id}:`, error);
+        }
+
         let listItem = document.createElement('li');
         listItem.innerHTML = `
             ${employee.name} ${employee.lastname}
-            <button class="edit-btn" onclick="editEmployee(${employee.id}, '${employee.name}', '${employee.lastname}', '${employee.email}', '${employee.position}', ${employee.hourlyRate})">✏️</button>
+            <button class="edit-btn" onclick="editEmployee(${employee.id}, '${employee.name}', '${employee.lastname}', '${employee.email}', '${employee.position}', ${hourlyRateId})">✏️</button>
             <button class="delete-btn" onclick="deleteEmployee(${employee.id})">❌</button>
         `;
         employeeList.appendChild(listItem);
-    });
+    }
 }
-
 /**
  * Prepares the form for editing an existing employee
  * @param {number} id - Employee ID
@@ -223,8 +387,9 @@ function populateEmployeeList(employees) {
  * @param {string} position - Employee position
  * @param {number} hourlyRate - Employee hourly rate
  */
-function editEmployee(id, name, lastname, email, position, hourlyRate) {
+async function editEmployee(id, name, lastname, email, position, hourlyRateId) {
     console.log(`✏️ Editing employee: ${name} ${lastname} (ID: ${id})`);
+    console.log(`🔢 Hourly Rate ID to set: ${hourlyRateId}`);
 
     // ВЕДНАГА затваряме списъка със служители
     const employeeListContainer = document.getElementById('employeeListContainer');
@@ -255,9 +420,34 @@ function editEmployee(id, name, lastname, email, position, hourlyRate) {
         positionSelect.dispatchEvent(new Event('change'));
     }
 
+    // КЛЮЧОВА ПОПРАВКА: Правилно задаване на hourly rate в select-а
     const hourlyRateSelect = document.getElementById('hourlyRate');
-    if (hourlyRateSelect) {
-        hourlyRateSelect.value = hourlyRate;
+    if (hourlyRateSelect && hourlyRateId) {
+        console.log('💰 Setting hourly rate in select...');
+
+        // СТЪПКА 1: Първо проверяваме дали select-ът има опции
+        if (hourlyRateSelect.options.length <= 1) {
+            console.log('📋 Hourly rate select is empty, loading options first...');
+            await loadHourlyRatesIntoSelect();
+        }
+
+        // СТЪПКА 2: Задаваме стойността на select-а
+        let optionFound = false;
+        for (let option of hourlyRateSelect.options) {
+            if (option.value == hourlyRateId) {
+                hourlyRateSelect.value = hourlyRateId;
+                optionFound = true;
+                console.log(`✅ Successfully set hourly rate to: ${option.text} (ID: ${hourlyRateId})`);
+                break;
+            }
+        }
+
+        if (!optionFound) {
+            console.warn(`⚠️ Could not find hourly rate option with ID: ${hourlyRateId}`);
+            console.log('Available options:', Array.from(hourlyRateSelect.options).map(opt => ({value: opt.value, text: opt.text})));
+        }
+
+        // Задействаме change event за floating label
         hourlyRateSelect.dispatchEvent(new Event('change'));
     }
 
@@ -281,8 +471,8 @@ function editEmployee(id, name, lastname, email, position, hourlyRate) {
     // ПОПРАВКА: Задаваме правилния текст на submit бутона
     const submitBtn = document.getElementById('submitEmployee');
     if (submitBtn) {
-        submitBtn.textContent = '✔'; // Тикче за update
-        submitBtn.innerHTML = '<span>✔</span>'; // Алтернативно с span
+        submitBtn.textContent = '✓'; // Тикче за update
+        submitBtn.innerHTML = '<span>✓</span>'; // Алтернативно с span
         console.log("🔄 Submit button updated to checkmark for edit mode");
     }
 
@@ -295,6 +485,12 @@ function editEmployee(id, name, lastname, email, position, hourlyRate) {
     }
 }
 
+/**
+ * НОВА ПОМОЩНА ФУНКЦИЯ: Валидира hourly rate полето
+ */
+function validateHourlyRateSelection() {
+    return validateHourlyRateSelect('hourlyRate');
+}
 
 /**
  * Deletes an employee after confirmation

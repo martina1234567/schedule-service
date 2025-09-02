@@ -1194,7 +1194,7 @@ function setupResponsiveCalendar() {
         resizeTimeout = setTimeout(() => {
             console.log('📏 Window resized, updating calendar...');
             resizeCalendar();
-            updateCalendarView();
+            //updateCalendarView();
         }, 300); // Debounce 300ms
     });
 
@@ -1203,7 +1203,7 @@ function setupResponsiveCalendar() {
         setTimeout(() => {
             console.log('🔄 Orientation changed, updating calendar...');
             resizeCalendar();
-            updateCalendarView();
+            //updateCalendarView();
         }, 500); // Чакаме orientation change да завърши
     });
 
@@ -1291,7 +1291,7 @@ function adjustCalendarHeight() {
 
 /**
  * НОВА ФУНКЦИЯ: Обновява view на календара според размера на екрана
- */
+ *//*
 function updateCalendarView() {
     if (!window.calendar) return;
 
@@ -1323,7 +1323,7 @@ function updateCalendarView() {
         console.error('❌ Error updating calendar view:', error);
     }
 }
-
+*/
 /**
  * НОВА ФУНКЦИЯ: Проверява дали устройството е mobile
  */
@@ -1426,6 +1426,35 @@ function collapseSidebar() {
         console.log('✅ Sidebar collapsed with responsive sizing');
     }
 }
+/**
+ * ДОБАВЕНА ЛИПСВАЩА ФУНКЦИЯ: Filters the employee list based on search input
+ */
+function filterEmployees() {
+    const searchInput = document.getElementById('searchInput');
+    const employeeList = document.getElementById('employeeList');
+
+    if (!searchInput || !employeeList) {
+        console.warn('⚠️ Search input or employee list not found');
+        return;
+    }
+
+    const input = searchInput.value.toLowerCase();
+    const employeeListItems = employeeList.getElementsByTagName('li');
+
+    console.log(`🔍 Filtering employees with search term: "${input}"`);
+
+    // Loop through all list items and show/hide based on search
+    for (let i = 0; i < employeeListItems.length; i++) {
+        const employeeName = employeeListItems[i].textContent.toLowerCase();
+        if (employeeName.includes(input)) {
+            employeeListItems[i].style.display = ""; // Show matching results
+        } else {
+            employeeListItems[i].style.display = "none"; // Hide non-matching results
+        }
+    }
+
+    console.log(`✅ Employee filtering completed for: "${input}"`);
+}
 
 // НОВИ ЕКСПОРТИ: Правим новите функции достъпни глобално
 window.saveAllFormsState = saveAllFormsState;
@@ -1434,10 +1463,12 @@ window.clearAllSavedFormsState = clearAllSavedFormsState;
 window.setupResponsiveCalendar = setupResponsiveCalendar;
 window.resizeCalendar = resizeCalendar;
 window.adjustCalendarHeight = adjustCalendarHeight;
-window.updateCalendarView = updateCalendarView;
+//window.updateCalendarView = updateCalendarView;
 window.isMobileDevice = isMobileDevice;
 window.isLandscapeMode = isLandscapeMode;
 window.getOptimalSidebarWidth = getOptimalSidebarWidth;
+window.filterEmployees = filterEmployees;
+window.initializeUIManager = initializeUIManager;
 
 /**
  * НОВА ФУНКЦИЯ: Уверява се че event формата е скрита при зареждане на страницата

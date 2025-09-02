@@ -2,6 +2,7 @@ package com.example.schedule.service;
 
 import com.example.schedule.entity.Event;
 import com.example.schedule.entity.Employee;
+import com.example.schedule.entity.HourlyRate;
 import com.example.schedule.repository.EventRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -485,10 +486,16 @@ public class ValidationService {
             return "Employee information is required";
         }
 
-        Integer dailyContractHours = employee.getHourlyRate();
-        if (dailyContractHours == null) {
+        Integer dailyContractHours;
+        if (employee.getHourlyRate() == null) {
             System.out.println("⚠️ Служителят няма зададени договорни часове, използваме 8 часа по подразбиране");
             dailyContractHours = 8;
+        } else {
+            dailyContractHours = employee.getHourlyRate().getDailyHours();
+            if (dailyContractHours == null || dailyContractHours <= 0) {
+                System.out.println("⚠️ Невалидни договорни часове, използваме 8 часа по подразбиране");
+                dailyContractHours = 8;
+            }
         }
 
         // НОВА ЛОГИКА: Определяме максималните седмични часове според договора
