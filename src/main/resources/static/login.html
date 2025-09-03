@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Schedule Management System</title>
+    <link rel="stylesheet" href="loginStyle.css">
+</head>
+<body>
+<!-- ОСНОВЕН КОНТЕЙНЕР ЗА ЛОГИН -->
+<div class="login-container">
+    <!-- HEADER С ЛОГО И ЗАГЛАВИЕ -->
+    <div class="login-header">
+
+        <div class="login-logo"><img src="images/logo.png" alt="App Logo"></div>
+        <h1>Влизане в системата</h1>
+        <p>Система за управление на работни графици</p>
+    </div>
+
+    <!-- ERROR СЪОБЩЕНИЯ -->
+    <div id="error-message" class="error-message" role="alert">
+        <span id="error-text"></span>
+    </div>
+
+    <!-- ЛОГИН ФОРМА -->
+    <form class="login-form" id="loginForm" novalidate>
+        <!-- ПОЛЕ ЗА ПОТРЕБИТЕЛСКО ИМЕ/EMAIL -->
+        <div class="form-group">
+            <input
+                    type="text"
+                    id="username"
+                    class="form-input"
+                    placeholder=" "
+                    autocomplete="username"
+                    required
+            >
+            <label for="username" class="form-label">Потребителско име</label>
+        </div>
+
+        <!-- ПОЛЕ ЗА ПАРОЛА -->
+        <div class="form-group">
+            <input
+                    type="password"
+                    id="password"
+                    class="form-input"
+                    placeholder=" "
+                    autocomplete="current-password"
+                    required
+            >
+            <label for="password" class="form-label">Парола</label>
+            <button type="button" class="password-toggle" id="passwordToggle" title="Покажи/скрий парола">
+                👁️
+            </button>
+        </div>
+
+        <!-- CHECKBOX ЗА "ЗАПОМНИ МЕ" -->
+        <div class="remember-me">
+            <input type="checkbox" id="rememberMe" name="rememberMe">
+            <label for="rememberMe">Запомни ме</label>
+        </div>
+
+        <!-- БУТОН ЗА ВЛИЗАНЕ -->
+        <button type="submit" class="login-btn" id="loginBtn">
+            Влизане
+        </button>
+    </form>
+
+    <!-- FOOTER -->
+    <div class="login-footer">
+        <p>&copy; 2024 Schedule Management System. Всички права запазени.</p>
+    </div>
+</div>
+
+<script src="roleManager.js" defer></script>
+</body>
+</html>
