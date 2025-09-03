@@ -69,7 +69,18 @@
             color: white;
             font-weight: bold;
             overflow: hidden;                /* ← НОВО */
-            padding: 15px;                   /* ← НОВО */
+            padding: 15px;
+            overflow: visible; /* ← НОВО */
+        }
+        .login-logo:hover::before {
+            transform: translate(-50%, -50%) scale(1.1);  /* ← НОВО */
+        }
+        .login-logo img {
+            transition: transform 0.3s ease;
+        }
+
+        .login-logo:hover img {
+            transform: scale(1.1);
         }
 
         /* НОВА СЕКЦИЯ: */
@@ -300,4 +311,14 @@
         .form-input.valid {
             border-color: #28a745;
             background-color: #f8fff8;
+        }
+        .twingo-brand {
+            color: #007bff;          /* Същия син цвят като в дизайна */
+            font-weight: 600;        /* По-смел шрифт */
+            font-size: 13px;         /* Малко по-голям от останалия текст */
+            transition: color 0.3s ease;  /* Smooth hover ефект */
+        }
+
+        .twingo-brand:hover {
+            color: #0056b3;          /* По-тъмен син при hover */
         }
