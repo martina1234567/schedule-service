@@ -26,10 +26,16 @@ function initializeUIManager() {
  * Sets up navigation button handlers
  */
 function setupNavigationHandlers() {
-    // Employee Schedule navigation button
-    document.getElementById('employeeScheduleBtn').addEventListener('click', function() {
-        window.location.href = 'schedule.html';
-    });
+    // Generate Schedule button
+    const generateBtn = document.getElementById('generate-schedule-btn');
+    if (generateBtn) {
+        generateBtn.addEventListener('click', function() {
+            // За сега само log, по-късно ще добавиш логиката за генериране
+            console.log('Generate schedule clicked');
+            // Или ако искаш да отива към schedule.html:
+            // window.location.href = 'schedule.html';
+        });
+    }
 
     // Schedule button (home page navigation)
     const scheduleBtn = document.getElementById('scheduleBtn');

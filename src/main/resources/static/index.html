@@ -29,8 +29,11 @@
             </button>
         </div>
 
-        <!-- Бутон за график на служителите - преместен по-надолу -->
-    <button id="employeeScheduleBtn" data-tooltip="Employee Schedule">Employee Schedule</button>
+        <!-- Бутон за автоматично генериране на график -->
+        <button id="generate-schedule-btn" data-tooltip="Auto Generate Monthly Schedule">
+            <span class="generate-icon">🔄</span>
+            <span class="button-text">Generate Schedule</span>
+        </button>
 
     <!-- Контейнер за бутони за служители - Employee button container -->
     <div class="button-container">
@@ -43,13 +46,7 @@
         </div>
     </div>
 
-    <!-- НОВА СЕКЦИЯ: Добави тук бутона за автоматично генериране -->
-    <div class="schedule-generation-container">
-        <button id="generate-schedule-btn" class="generate-schedule-btn" data-tooltip="Auto Generate Monthly Schedule">
-            <span class="generate-icon">🔄</span>
-            <span class="button-text">Generate Schedule</span>
-        </button>
-    </div>
+
 
     <input type="text" id="searchInput" placeholder="Търси по име..." onkeyup="filterEmployees()" style="display: none;">
 

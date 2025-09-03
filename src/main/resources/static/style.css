@@ -2534,3 +2534,26 @@ html body .fc-popover,
     font-size: 12px;
     color: #007bff;
 }
+
+
+/*бутон за допълнителен график*/
+/* За Employee Schedule бутона който няма span */
+#sidebar.collapsed ##generate-schedule-btn {
+    font-size: 18px !important; /* Показваме само емо */
+    text-align: center !important;
+}
+
+/* Алтернативно: Замени текста с емо за Employee Schedule */
+#sidebar.collapsed ##generate-schedule-btn {
+    text-indent: -9999px !important; /* Скриваме оригиналния текст */
+}
+
+#sidebar.collapsed ##generate-schedule-btn::after {
+    content: "🔄";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 18px !important;
+    text-indent: 0 !important;
+}

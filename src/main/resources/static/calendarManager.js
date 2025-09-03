@@ -327,10 +327,14 @@ async function handleEventDrop(info) {
     event.setProp('title', event.title.replace(' (Validating...)', ' (Updating...)').replace(' (Checking...)', ' (Updating...)'));
 
     // Подготвяме данните за backend в правилния формат
+    // ПОПРАВКА: Ръчно форматиране в ISO формат
+    const newStartFormatted = new Date(newStart).toISOString().slice(0, 19); // Премахва Z
+    const newEndFormatted = new Date(newEnd).toISOString().slice(0, 19);
+
     const updateData = {
         id: eventId,
-        start: formatDateTimeForBackend(newStart),
-        end: formatDateTimeForBackend(newEnd),
+        start: newStartFormatted,
+        end: newEndFormatted,
         activity: event.extendedProps.activity || null,
         leaveType: event.extendedProps.leaveType || null
     };
@@ -455,22 +459,21 @@ function setupGlobalDragListeners() {
 function formatDateTimeForBackend(date) {
     if (!date) return null;
 
-    // Уверяваме се че имаме Date обект
-    const d = new Date(date);
+    const dateObj = new Date(date);
 
-    // Форматираме в формата който очаква backend: "YYYY-MM-DD HH:MM:SS"
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    const hours = String(d.getHours()).padStart(2, '0');
-    const minutes = String(d.getMinutes()).padStart(2, '0');
-    const seconds = String(d.getSeconds()).padStart(2, '0');
+    const year = dateObj.getFullYear();
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const day = String(dateObj.getDate()).padStart(2, '0');
+    const hours = String(dateObj.getHours()).padStart(2, '0');
+    const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+    const seconds = String(dateObj.getSeconds()).padStart(2, '0');
 
+    // Забележи: с интервал вместо "T"
     const formatted = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-    console.log(`📅 Formatted date: ${date} -> ${formatted}`);
-
+    console.log(`🔄 Formatted date: ${date} -> ${formatted}`);
     return formatted;
 }
+
 
 /**
  * НОВА ПОМОЩНА ФУНКЦИЯ: Показва notification за drag & drop операции

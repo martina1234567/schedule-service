@@ -204,30 +204,7 @@ async function getHourlyRateIdByName(rateName) {
     }
 }
 
-/**
- * ПОМОЩНА ФУНКЦИЯ: Намиране на hourly rate име по ID
- * @param {number} rateId - ID на ставката
- * @returns {Promise<string|null>} името на ставката или null ако не е намерена
- */
-async function getHourlyRateNameById(rateId) {
-    console.log(`🔍 Finding hourly rate name for ID: ${rateId}`);
 
-    try {
-        const hourlyRates = await loadHourlyRatesFromDatabase();
-        const rate = hourlyRates.find(r => r.id == rateId);
-
-        if (rate) {
-            console.log(`✅ Found hourly rate name: "${rate.rateName}" for ID: ${rateId}`);
-            return rate.rateName;
-        } else {
-            console.log(`❌ Hourly rate not found with ID: ${rateId}`);
-            return null;
-        }
-    } catch (error) {
-        console.error('❌ Error finding hourly rate by ID:', error);
-        return null;
-    }
-}
 
 /**
  * НОВА ФУНКЦИЯ: Задава избрана стойност на hourly rate select
