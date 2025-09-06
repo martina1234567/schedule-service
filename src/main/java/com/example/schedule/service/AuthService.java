@@ -246,6 +246,61 @@ public class AuthService {
         return false;
     }
 
+    /**
+     * Получава служители които нямат потребителски акаунти
+     * ИЛИ служители които имат потребителски акаунти, но нямат роли
+     * @return List<Employee> - списък със служители без акаунти или без роли
+     */
+    public List<Employee> getEmployeesWithoutAccounts() {
+        // Първо опитваме да намерим служители без потребителски акаунти
+        List<Employee> employeesWithoutUsers = userRepository.findEmployeesWithoutUserAccounts();
+
+        System.out.println("📋 Found " + employeesWithoutUsers.size() + " employees without user accounts");
+
+        // Ако няма служители без потребителски акаунти,
+        // намираме служители с потребителски акаунти, но без роли
+        if (employeesWithoutUsers.isEmpty()) {
+            List<Employee> employeesWithoutRoles = employeeRepository.findEmployeesWithUsersButWithoutRoles();
+            System.out.println("📋 Found " + employeesWithoutRoles.size() + " employees with accounts but without roles");
+            return employeesWithoutRoles;
+        }
+
+        return employeesWithoutUsers;
+    }
+
+    /**
+     * АЛТЕРНАТИВЕН МЕТОД - Получава служители без роли
+     * Тази опция може да се използва ако искаш само служители без роли
+     * @return List<Employee> - списък със служители без роли
+     */
+    public List<Employee> getEmployeesWithoutRoles() {
+        List<Employee> employees = employeeRepository.findEmployeesWithUsersButWithoutRoles();
+        System.out.println("📋 Found " + employees.size() + " employees without roles");
+        return employees;
+    }
+
+    /**
+     * МЕТОД ЗА ПОЛУЧАВАНЕ НА ВСИЧКИ СЛУЖИТЕЛИ (за debugging)
+     * @return List<Employee> - всички служители
+     */
+    public List<Employee> getAllEmployeesForDebugging() {
+        List<Employee> allEmployees = employeeRepository.findAll();
+        System.out.println("👥 Total employees in database: " + allEmployees.size());
+
+        for (Employee emp : allEmployees) {
+            Optional<User> userOpt = userRepository.findByEmployeeId(emp.getId());
+            if (userOpt.isPresent()) {
+                User user = userOpt.get();
+                System.out.println("   Employee: " + emp.getName() + " " + emp.getLastname() +
+                        " -> User: " + user.getUsername() +
+                        " -> Roles: " + user.getRoles().size());
+            } else {
+                System.out.println("   Employee: " + emp.getName() + " " + emp.getLastname() + " -> NO USER ACCOUNT");
+            }
+        }
+
+        return allEmployees;
+    }
     // ===============================
     // CONVERSION МЕТОДИ
     // ===============================

@@ -358,3 +358,223 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+
+        /* СТИЛОВЕ ЗА SELECT (COMBO BOX) - КОНСИСТЕНТНИ С FORM-INPUT */
+
+        /* Основни стилове за select елемент */
+        .form-select {
+            width: 100%;
+            padding: 16px 12px 12px;
+            font-size: 16px;
+            border-radius: 8px;
+            border: 2px solid #A6CDFF;
+            background-color: #f3faff;
+            color: #333;
+            outline: none;
+            transition: all 0.3s ease;
+            appearance: none; /* Премахва стандартната стрелка */
+            cursor: pointer;
+
+            /* Добавя custom dropdown стрелка */
+            background-image: url("data:image/svg+xml;charset=UTF-8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23666'><path d='M7 10l5 5 5-5z'/></svg>");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 20px;
+            padding-right: 40px; /* Оставя място за стрелката */
+        }
+
+        /* Фокус състояние - същото като при form-input */
+        .form-select:focus {
+            border-color: #6fa3e8;
+            background-color: #e6f1ff;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+
+            /* Променя цвета на стрелката при фокус */
+            background-image: url("data:image/svg+xml;charset=UTF-8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%234d80e1'><path d='M7 10l5 5 5-5z'/></svg>");
+        }
+
+        /* Стилове за label при select */
+        .select-group .form-label {
+            position: absolute;
+            left: 12px;
+            top: 16px;
+            font-size: 16px;
+            color: #666;
+            pointer-events: none;
+            transition: all 0.3s ease;
+            background-color: transparent;
+            padding: 0 4px;
+        }
+
+        /* Активно състояние на label при select */
+        .form-select:focus + .form-label,
+        .form-label.active {
+            top: -8px;
+            font-size: 12px;
+            color: #4d80e1;
+            background-color: white;
+        }
+
+        /* Стилове за option елементите */
+        .form-select option {
+            background-color: white;
+            color: #333;
+            padding: 8px 12px;
+        }
+
+        /* Disabled option стил */
+        .form-select option:disabled {
+            color: #999;
+            font-style: italic;
+        }
+
+        /* Hover ефект за select */
+        .form-select:hover:not(:focus) {
+            border-color: #9bc5ff;
+            background-color: #f8fcff;
+        }
+
+        /* Стилове за валидация (ако се използват) */
+        .form-select.valid {
+            border-color: #28a745;
+            background-color: #f8fff9;
+        }
+
+        .form-select.invalid {
+            border-color: #dc3545;
+            background-color: #fff8f8;
+        }
+
+        /* Responsive стилове за по-малки екрани */
+        @media (max-width: 480px) {
+            .form-select {
+                font-size: 16px; /* Предотвратява zoom на iOS */
+                padding: 14px 10px 10px;
+            }
+
+            .select-group .form-label {
+                font-size: 14px;
+                top: 14px;
+            }
+
+            .form-select:focus + .form-label,
+            .form-label.active {
+                font-size: 11px;
+                top: -6px;
+            }
+        }
+
+
+/* СТАТИЧЕН LABEL ЗА SELECT ГРУПА */
+.form-group.select-group {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+/* СТАТИЧЕН LABEL - ВИНАГИ В ГОРНИЯ ЛЯВ ЪГЪЛ */
+.form-group.select-group .form-label {
+    position: static; /* НЕ е absolute/relative */
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 8px;
+    padding: 0;
+    background: none;
+    transition: none; /* Без анимации */
+}
+
+/* ПРЕМАХВАМЕ ВСИЧКИ FLOATING ЕФЕКТИ ЗА SELECT LABEL */
+.form-group.select-group .form-label.active,
+.form-select:focus + .form-label,
+.form-select:not(:placeholder-shown) + .form-label {
+    position: static; /* Винаги статичен */
+    top: auto;
+    left: auto;
+    transform: none;
+    font-size: 14px; /* Винаги същия размер */
+    color: #333; /* Винаги същия цвят */
+    background: none;
+}
+
+/* SELECT ЕЛЕМЕНТ - ОБНОВЕНИ СТИЛОВЕ */
+.form-select {
+    width: 100%;
+    padding: 12px 40px 12px 12px; /* По-равномерен padding */
+    font-size: 16px;
+    border-radius: 8px;
+    border: 2px solid #A6CDFF;
+    background-color: #f3faff;
+    color: #333;
+    outline: none;
+    transition: all 0.3s ease;
+    appearance: none;
+    cursor: pointer;
+    box-sizing: border-box;
+}
+
+/* FOCUS СЪСТОЯНИЕ НА SELECT */
+.form-select:focus {
+    border-color: #6fa3e8;
+    background-color: #e6f1ff;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* HOVER ЕФЕКТ */
+.form-select:hover:not(:focus) {
+    border-color: #9bc5ff;
+    background-color: #f8fcff;
+}
+
+/* OPTION ЕЛЕМЕНТИ */
+.form-select option {
+    padding: 10px;
+    background-color: white;
+    color: #333;
+    font-size: 16px;
+}
+
+/* DISABLED OPTION */
+.form-select option:disabled {
+    color: #999;
+    font-style: italic;
+}
+
+/* СТРЕЛКА ЗА DROPDOWN */
+.form-group.select-group::after {
+    content: "▼";
+    position: absolute;
+    right: 15px;
+    top: calc(100% - 35px); /* Позиционираме спрямо select елемента */
+    transform: translateY(-50%);
+    color: #666;
+    pointer-events: none;
+    font-size: 12px;
+    transition: color 0.3s ease;
+}
+
+/* ПРОМЯНА НА СТРЕЛКАТА ПРИ FOCUS */
+.form-select:focus + .form-label + *::after,
+.form-group.select-group:focus-within::after {
+    color: #6fa3e8;
+}
+
+/* LOADING СЪСТОЯНИЕ */
+.form-select.loading {
+    background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICAgIDxjaXJjbGUgY3g9IjEwIiBjeT0iMTAiIHI9IjMiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzY2NiIgc3Ryb2tlLXdpZHRoPSIyIj4KICAgICAgICA8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIHR5cGU9InJvdGF0ZSIgdmFsdWVzPSIwIDEwIDEwOzM2MCAxMCAxMCIgZHVyPSIxcyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KICAgIDwvY2lyY2xlPgo8L3N2Zz4K');
+    background-repeat: no-repeat;
+    background-position: right 35px center; /* Позиция до стрелката */
+    background-size: 16px;
+}
+
+/* ВАЛИДАЦИЯ СТИЛОВЕ */
+.form-select.valid {
+    border-color: #28a745;
+    background-color: #f8fff9;
+}
+
+.form-select.invalid {
+    border-color: #dc3545;
+    background-color: #fff8f8;
+}
+

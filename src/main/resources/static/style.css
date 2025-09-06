@@ -507,7 +507,6 @@ margin-top: 1em; /* по желание */
     border-radius: 50% !important;
     position: relative;
     overflow: hidden !important; /* ПРОМЯНА: overflow: hidden вместо visible */
-    margin-top: 10px;
     margin-left: 5px;
     padding: 0 !important;
     min-width: 40px !important;

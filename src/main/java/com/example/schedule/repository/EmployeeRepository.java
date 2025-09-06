@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -84,4 +85,40 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
      */
     @Query("SELECT COUNT(e) FROM Employee e WHERE e.position = :position")
     Long countByPosition(@Param("position") String position);
+
+    /**
+     * Намира служители които имат потребителски акаунти, но нямат роли
+     * Полезно за dropdown в registration формата когато всички служители имат акаунти
+     * @return List<Employee> - служители с акаунти, но без роли
+     */
+    @Query("SELECT e FROM Employee e " +
+            "WHERE e.id IN (SELECT u.employee.id FROM User u WHERE u.employee IS NOT NULL) " +
+            "AND e.id NOT IN (" +
+            "SELECT ur.employee.id FROM User ur " +
+            "JOIN ur.roles r " +
+            "WHERE ur.employee IS NOT NULL" +
+            ") " +
+            "ORDER BY e.name ASC, e.lastname ASC")
+    List<Employee> findEmployeesWithUsersButWithoutRoles();
+
+    /**
+     * АЛТЕРНАТИВНА ЗАЯВКА (по-проста)
+     * Намира служители чиито потребители нямат роли
+     */
+    @Query("SELECT e FROM Employee e " +
+            "JOIN User u ON e.id = u.employee.id " +
+            "WHERE u.roles IS EMPTY " +
+            "ORDER BY e.name ASC, e.lastname ASC")
+    List<Employee> findEmployeesWithEmptyRoles();
+
+    /**
+     * ЗАЯВКА ЗА DEBUGGING
+     * Намира всички служители и техните потребители/роли
+     * @return List<Object[]> - [Employee, User, Role count]
+     */
+    @Query("SELECT e, u, SIZE(u.roles) as roleCount " +
+            "FROM Employee e " +
+            "LEFT JOIN User u ON e.id = u.employee.id " +
+            "ORDER BY e.name ASC, e.lastname ASC")
+    List<Object[]> findAllEmployeesWithUserAndRoleInfo();
 }

@@ -271,21 +271,75 @@ public class AuthController {
     // ===============================
 
     /**
+     * DEBUG ENDPOINT ЗА ПОЛУЧАВАНЕ НА ВСИЧКИ СЛУЖИТЕЛИ (за тестване)
+     * GET /api/auth/all-employees-debug
+     * @return ResponseEntity със списък от всички служители и тяхната информация
+     */
+    @GetMapping("/all-employees-debug")
+    public ResponseEntity<?> getAllEmployeesDebug() {
+        try {
+            List<Employee> allEmployees = authService.getAllEmployeesForDebugging();
+
+            System.out.println("🔍 Debug: Retrieved " + allEmployees.size() + " employees");
+            return ResponseEntity.ok(allEmployees);
+
+        } catch (Exception e) {
+            System.err.println("❌ Error in debug endpoint: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Грешка при debugging"));
+        }
+    }
+
+    /**
+     * DEBUG ENDPOINT ЗА ПОЛУЧАВАНЕ НА СЛУЖИТЕЛИ БЕЗ РОЛИ
+     * GET /api/auth/employees-without-roles
+     * @return ResponseEntity със списък от служители без роли
+     */
+    @GetMapping("/employees-without-roles")
+    public ResponseEntity<?> getEmployeesWithoutRoles() {
+        try {
+            List<Employee> employeesWithoutRoles = authService.getEmployeesWithoutRoles();
+
+            System.out.println("📋 Found " + employeesWithoutRoles.size() + " employees without roles");
+            return ResponseEntity.ok(employeesWithoutRoles);
+
+        } catch (Exception e) {
+            System.err.println("❌ Error getting employees without roles: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Грешка при получаване на служителите без роли"));
+        }
+    }
+
+    /**
      * ПОЛУЧАВАНЕ НА ВСИЧКИ СЛУЖИТЕЛИ БЕЗ ПОТРЕБИТЕЛСКИ АКАУНТИ
      * Този endpoint се използва в registration формата
      */
     @GetMapping("/available-employees")
-    public ResponseEntity<List<Employee>> getAvailableEmployees() {
+    public ResponseEntity<?> getAvailableEmployees() {
         try {
-            // Тук трябва да добавите логика в AuthService за получаване на служители без акаунти
-            // За момента връщаме празен списък
-            return ResponseEntity.ok(List.of());
+            List<Employee> availableEmployees = authService.getEmployeesWithoutAccounts();
+
+            System.out.println("📋 Found " + availableEmployees.size() + " available employees");
+
+            // Добавяме детайлна информация в отговора за debugging
+            Map<String, Object> response = new HashMap<>();
+            response.put("employees", availableEmployees);
+            response.put("count", availableEmployees.size());
+            response.put("message", availableEmployees.isEmpty() ?
+                    "Няма служители без акаунти или роли" :
+                    "Намерени " + availableEmployees.size() + " служители");
+
+            return ResponseEntity.ok(response);
+
         } catch (Exception e) {
-            System.err.println("❌ Error fetching available employees: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            System.err.println("❌ Error getting available employees: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Грешка при получаване на служителите"));
         }
     }
-
     // ===============================
     // UTILITY МЕТОДИ
     // ===============================

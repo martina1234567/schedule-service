@@ -25,6 +25,12 @@ async function initializeApplication() {
     try {
         console.log('🔧 Starting application initialization...');
 
+        // ДОБАВИ ТЕЗИ 3 РЕДА ТУК:
+        console.log('🚪 Initializing Logout Manager...');
+        if (typeof initializeLogoutManager === 'function') {
+            initializeLogoutManager();
+        }
+
         // СТЪПКА 1: Initialize UI Manager first
         console.log('📱 Initializing UI Manager...');
         if (typeof initializeUIManager === 'function') {

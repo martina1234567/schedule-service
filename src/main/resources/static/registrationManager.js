@@ -1,5 +1,5 @@
 // ===============================
-// JAVASCRIPT ФУНКЦИОНАЛНОСТ ЗА РЕГИСТРАЦИЯ
+// JAVASCRIPT ФУНКЦИОНАЛНОСТ ЗА РЕГИСТРАЦИЯ - ПОПРАВЕНО
 // ===============================
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -19,56 +19,284 @@ function initializeRegistrationPage() {
     const confirmPasswordInput = document.getElementById('confirmPassword');
     const registerBtn = document.getElementById('registerBtn');
 
+    // Проверяваме дали елементите съществуват
+    if (!employeeSelect) {
+        console.error('❌ Employee select element not found!');
+        return;
+    }
+
     // Зареждаме служителите
     loadAvailableEmployees();
 
     // Event listeners
     setupRegistrationEventListeners();
 
+    // ПРЕМАХНАТО: initializeSelectFloatingLabels();
+    // Вместо това, само инициализираме обикновени input floating labels
+    initializeInputFloatingLabels();
+
     console.log('✅ Registration page initialized');
 }
 
 /**
- * ЗАРЕЖДА СЛУЖИТЕЛИТЕ БЕЗ АКАУНТИ ЗА DROPDOWN
+ * НОВА ФУНКЦИЯ: Инициализира floating labels САМО за input полетата
+ * Select полето (Employee) има статичен label
+ */
+function initializeInputFloatingLabels() {
+    // Вземаме САМО input елементите, НЕ select елементите
+    const inputElements = document.querySelectorAll('input.form-input');
+
+    inputElements.forEach(input => {
+        const label = document.querySelector(`label[for='${input.id}']`);
+
+        if (label) {
+            updateInputLabelPosition(input, label);
+
+            input.addEventListener('input', () => updateInputLabelPosition(input, label));
+            input.addEventListener('focus', () => updateInputLabelPosition(input, label));
+            input.addEventListener('blur', () => updateInputLabelPosition(input, label));
+        }
+    });
+
+    console.log('📝 Floating labels initialized for input fields only');
+}
+
+/**
+ * НОВА ФУНКЦИЯ: Обновява позицията на label само за input полета
+ */
+function updateInputLabelPosition(input, label) {
+    if (input.value && input.value.trim() !== '') {
+        label.classList.add('active');
+    } else {
+        label.classList.remove('active');
+    }
+}
+
+
+/**
+ * ПОПРАВЕНА ФУНКЦИЯ ЗА ЗАРЕЖДАНЕ НА СЛУЖИТЕЛИ БЕЗ АКАУНТИ
+ * Използва правилния URL и обработва грешките правилно
  */
 async function loadAvailableEmployees() {
     const employeeSelect = document.getElementById('employeeSelect');
 
-    try {
-        employeeSelect.classList.add('loading');
-        employeeSelect.innerHTML = '<option value="" disabled selected>Зареждане...</option>';
+    if (!employeeSelect) {
+        console.error('❌ Employee select element not found');
+        return;
+    }
 
-        const response = await fetch('/api/auth/available-employees');
+    try {
+        console.log('📡 Loading available employees from backend...');
+
+        // Показваме loading състояние
+        employeeSelect.disabled = true;
+        employeeSelect.innerHTML = '<option value="" disabled selected>Зареждане служители...</option>';
+
+        // ПРЕМАХНАТО: Манипулации на label позиция
+        // Label-ът остава винаги статичен
+
+        const response = await fetch('/api/auth/available-employees', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            credentials: 'same-origin'
+        });
+
+        console.log('📊 Response status:', response.status);
 
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            let errorMessage;
+            try {
+                const errorData = await response.json();
+                errorMessage = errorData.message || `HTTP ${response.status}: ${response.statusText}`;
+            } catch (jsonError) {
+                errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+            }
+            throw new Error(errorMessage);
         }
 
-        const employees = await response.json();
+        // ПОПРАВКА: Правилно извличаме данните от response
+        const responseData = await response.json();
+        console.log('✅ Loaded response data:', responseData);
 
-        // Попълваме dropdown-а
+        // КРИТИЧНА ПОПРАВКА: Backend връща структуриран отговор
+        let employees;
+
+        if (Array.isArray(responseData)) {
+            // Ако response е директно масив (стар формат)
+            employees = responseData;
+        } else if (responseData.employees && Array.isArray(responseData.employees)) {
+            // Ако response е обект с employees масив (нов формат)
+            employees = responseData.employees;
+        } else {
+            // Неочакван формат на response
+            console.error('❌ Unexpected response format:', responseData);
+            throw new Error('Неочакван формат на отговора от сървъра');
+        }
+
+        console.log('✅ Extracted employees array:', employees);
+
+        // Попълваме dropdown-а със служителите
         employeeSelect.innerHTML = '<option value="" disabled selected>Избери служител</option>';
 
-        if (employees.length === 0) {
+        if (!employees || employees.length === 0) {
+            employeeSelect.innerHTML = '<option value="" disabled>Няма служители без акаунти</option>';
+            employeeSelect.disabled = true;
+            console.log('⚠️ No employees without accounts found');
+        } else {
+            employees.forEach(employee => {
+                const option = document.createElement('option');
+                option.value = employee.id;
+                // Проверяваме дали има position преди да я използваме
+                const positionText = employee.position ? ` - ${employee.position}` : '';
+                option.textContent = `${employee.name} ${employee.lastname}${positionText}`;
+                employeeSelect.appendChild(option);
+            });
+
+            employeeSelect.disabled = false;
+            console.log(`✅ Successfully loaded ${employees.length} employees without accounts`);
+        }
+
+        // ПРЕМАХНАТО: updateLabelPosition(employeeSelect, label);
+        // Label-ът остава винаги статичен
+
+    } catch (error) {
+        console.error('❌ Error loading employees:', error);
+
+        // Показваме грешка в dropdown
+        employeeSelect.innerHTML = '<option value="" disabled>Грешка при зареждане</option>';
+        employeeSelect.disabled = true;
+
+        // Показваме детайлна грешка в зависимост от типа
+        if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+            showError('Не може да се свърже със сървъра. Моля проверете дали Spring Boot работи на порт 8080');
+            console.error('💡 Решение: Стартирайте Spring Boot приложението или проверете CORS настройките');
+        } else if (error.message.includes('404')) {
+            showError('Endpoint не е намерен. Проверете дали /api/auth/available-employees съществува');
+        } else if (error.message.includes('500')) {
+            showError('Сървърна грешка. Проверете логовете на Spring Boot приложението');
+        } else {
+            showError(`Грешка при зареждане на служителите: ${error.message}`);
+        }
+    }
+}
+
+
+
+/**
+ * АЛТЕРНАТИВЕН МЕТОД ЗА ЗАРЕЖДАНЕ СЪС ПЪЛЕН URL
+ * Използвайте този метод ако frontend и backend са на различни портове
+ */
+async function loadAvailableEmployeesWithFullURL() {
+    const employeeSelect = document.getElementById('employeeSelect');
+
+    if (!employeeSelect) {
+        console.error('❌ Employee select element not found');
+        return;
+    }
+
+    try {
+        console.log('📡 Loading available employees with full URL...');
+
+        employeeSelect.disabled = true;
+        employeeSelect.innerHTML = '<option value="" disabled selected>Зареждане служители...</option>';
+
+        // Използваме пълния URL за cross-origin заявки
+        const response = await fetch('http://localhost:8080/api/auth/available-employees', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            // За cross-origin заявки
+            mode: 'cors'
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        // ПОПРАВКА: Същата логика за извличане на employees
+        const responseData = await response.json();
+        console.log('✅ Loaded response data:', responseData);
+
+        let employees;
+        if (Array.isArray(responseData)) {
+            employees = responseData;
+        } else if (responseData.employees && Array.isArray(responseData.employees)) {
+            employees = responseData.employees;
+        } else {
+            throw new Error('Неочакван формат на отговора от сървъра');
+        }
+
+        // Същата логика за попълване на dropdown-а
+        employeeSelect.innerHTML = '<option value="" disabled selected>Избери служител</option>';
+
+        if (!employees || employees.length === 0) {
             employeeSelect.innerHTML = '<option value="" disabled>Няма служители без акаунти</option>';
             employeeSelect.disabled = true;
         } else {
             employees.forEach(employee => {
                 const option = document.createElement('option');
                 option.value = employee.id;
-                option.textContent = `${employee.name} ${employee.lastname} - ${employee.position}`;
+                const positionText = employee.position ? ` - ${employee.position}` : '';
+                option.textContent = `${employee.name} ${employee.lastname}${positionText}`;
                 employeeSelect.appendChild(option);
             });
+            employeeSelect.disabled = false;
         }
 
-        console.log(`📋 Loaded ${employees.length} employees without accounts`);
-
     } catch (error) {
-        console.error('❌ Error loading employees:', error);
+        console.error('❌ Error loading employees with full URL:', error);
         employeeSelect.innerHTML = '<option value="" disabled>Грешка при зареждане</option>';
-        showError('Грешка при зареждане на служителите');
-    } finally {
-        employeeSelect.classList.remove('loading');
+        employeeSelect.disabled = true;
+        showError(`Грешка: ${error.message}`);
+    }
+}
+/**
+ * ФУНКЦИЯ ЗА ПРОВЕРКА НА ПОТРЕБИТЕЛСКО ИМЕ
+ */
+async function validateUsername() {
+    const usernameInput = document.getElementById('username');
+    const username = usernameInput.value.trim();
+
+    if (username.length < 3) {
+        usernameInput.classList.add('invalid');
+        usernameInput.classList.remove('valid');
+        return false;
+    }
+
+    try {
+        // Използваме относителен URL
+        const response = await fetch(`/api/auth/check-username?username=${encodeURIComponent(username)}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (response.ok) {
+            const result = await response.json();
+
+            if (result.exists) {
+                usernameInput.classList.add('invalid');
+                usernameInput.classList.remove('valid');
+                showError('Това потребителско име вече се използва');
+                return false;
+            } else {
+                usernameInput.classList.add('valid');
+                usernameInput.classList.remove('invalid');
+                return true;
+            }
+        } else {
+            console.warn('Username validation failed:', response.status);
+            return true; // Позволяваме да продължи ако проверката не работи
+        }
+    } catch (error) {
+        console.error('Username validation error:', error);
+        return true; // Позволяваме да продължи ако има грешка
     }
 }
 
@@ -84,36 +312,52 @@ function setupRegistrationEventListeners() {
     const passwordToggle = document.getElementById('passwordToggle');
     const confirmPasswordToggle = document.getElementById('confirmPasswordToggle');
 
+    if (!form) return;
+
     // Form submit
     form.addEventListener('submit', handleRegistration);
 
     // Password toggles
-    passwordToggle.addEventListener('click', () => {
-        togglePasswordVisibility(passwordInput, passwordToggle);
-    });
+    if (passwordToggle) {
+        passwordToggle.addEventListener('click', () => {
+            togglePasswordVisibility(passwordInput, passwordToggle);
+        });
+    }
 
-    confirmPasswordToggle.addEventListener('click', () => {
-        togglePasswordVisibility(confirmPasswordInput, confirmPasswordToggle);
-    });
+    if (confirmPasswordToggle) {
+        confirmPasswordToggle.addEventListener('click', () => {
+            togglePasswordVisibility(confirmPasswordInput, confirmPasswordToggle);
+        });
+    }
 
     // Real-time валидация
-    usernameInput.addEventListener('blur', () => validateUsername());
-    passwordInput.addEventListener('input', () => validatePasswordStrength());
-    confirmPasswordInput.addEventListener('input', () => validatePasswordMatch());
+    if (usernameInput) {
+        usernameInput.addEventListener('blur', () => validateUsername());
+    }
+    if (passwordInput) {
+        passwordInput.addEventListener('input', () => validatePasswordStrength());
+    }
+    if (confirmPasswordInput) {
+        confirmPasswordInput.addEventListener('input', () => validatePasswordMatch());
+    }
 
     // Скриване на съобщения при typing
     [usernameInput, passwordInput, confirmPasswordInput].forEach(input => {
-        input.addEventListener('input', () => {
-            hideError();
-            hideSuccess();
-        });
+        if (input) {
+            input.addEventListener('input', () => {
+                hideError();
+                hideSuccess();
+            });
+        }
     });
 
     // Промяна в employee select
-    employeeSelect.addEventListener('change', () => {
-        hideError();
-        hideSuccess();
-    });
+    if (employeeSelect) {
+        employeeSelect.addEventListener('change', () => {
+            hideError();
+            hideSuccess();
+        });
+    }
 }
 
 /**
@@ -139,90 +383,94 @@ async function handleRegistration(event) {
         const response = await fetch('/api/auth/register', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
             },
             body: JSON.stringify({
                 username: formData.username,
                 password: formData.password,
                 confirmPassword: formData.confirmPassword,
                 employeeId: parseInt(formData.employeeId),
-                role: formData.role
+                role: formData.role || 'EMPLOYEE'
             })
         });
 
         const result = await response.json();
 
-        if (result.success) {
+        if (response.ok && result.success) {
             // Успешна регистрация
-            console.log('✅ Registration successful:', result.user.username);
-            showSuccess(`Потребителят "${result.user.username}" е създаден успешно!`);
+            console.log('✅ Registration successful:', result.user?.username);
+            showSuccess(`Потребителят "${result.user?.username}" е създаден успешно!`);
 
             // Изчистваме формата
             clearForm();
 
-            // Презареждаме списъка със служители
+            // Презареждаме списъка със служители след 1 секунда
             setTimeout(() => loadAvailableEmployees(), 1000);
 
         } else {
             // Грешка от сървъра
             console.error('❌ Registration failed:', result.message);
-            showError(result.message || 'Грешка при създаване на потребителя');
+            showError(result.message || 'Възникна грешка при регистрацията');
         }
 
     } catch (error) {
         console.error('❌ Registration error:', error);
-        showError('Възникна грешка при свързване със сървъра');
+
+        if (error.message.includes('Failed to fetch')) {
+            showError('Не може да се свърже със сървъра. Моля проверете дали Spring Boot работи на порт 8080');
+        } else {
+            showError('Възникна грешка при свързването със сървъра');
+        }
     } finally {
         setRegistrationLoading(false);
     }
 }
 
 /**
- * СЪБИРА ДАННИТЕ ОТ ФОРМАТА
+ * СЪБИРАНЕ НА ДАННИ ОТ ФОРМАТА
  */
 function collectFormData() {
+    const employeeSelect = document.getElementById('employeeSelect');
+    const usernameInput = document.getElementById('username');
+    const passwordInput = document.getElementById('password');
+    const confirmPasswordInput = document.getElementById('confirmPassword');
+    const roleSelect = document.getElementById('role');
+
     return {
-        employeeId: document.getElementById('employeeSelect').value,
-        username: document.getElementById('username').value.trim(),
-        password: document.getElementById('password').value,
-        confirmPassword: document.getElementById('confirmPassword').value,
-        role: document.querySelector('input[name="role"]:checked').value
+        employeeId: employeeSelect?.value,
+        username: usernameInput?.value?.trim(),
+        password: passwordInput?.value,
+        confirmPassword: confirmPasswordInput?.value,
+        role: roleSelect?.value || 'EMPLOYEE'
     };
 }
 
 /**
- * ВАЛИДИРА ВСИЧКИ ДАННИ ОТ ФОРМАТА
+ * ВАЛИДАЦИЯ НА ДАННИТЕ ОТ ФОРМАТА
  */
-function validateFormData(data) {
-    const errors = [];
-
-    // Проверка на служител
-    if (!data.employeeId) {
-        errors.push('Моля изберете служител');
+function validateFormData(formData) {
+    // Проверка за избран служител
+    if (!formData.employeeId) {
+        showError('Моля изберете служител');
+        return false;
     }
 
-    // Проверка на потребителско име
-    if (!data.username || data.username.length < 3) {
-        errors.push('Потребителското име трябва да е поне 3 символа');
+    // Проверка за потребителско име
+    if (!formData.username || formData.username.length < 3) {
+        showError('Потребителското име трябва да е поне 3 символа');
+        return false;
     }
 
-    // Проверка на парола
-    if (!data.password || data.password.length < 4) {
-        errors.push('Паролата трябва да е поне 4 символа');
+    // Проверка за парола
+    if (!formData.password || formData.password.length < 6) {
+        showError('Паролата трябва да е поне 6 символа');
+        return false;
     }
 
-    // Проверка на потвърждение на парола
-    if (data.password !== data.confirmPassword) {
-        errors.push('Паролите не съвпадат');
-    }
-
-    // Проверка на роля
-    if (!data.role) {
-        errors.push('Моля изберете роля');
-    }
-
-    if (errors.length > 0) {
-        showError(errors.join('<br>'));
+    // Проверка за съвпадение на паролите
+    if (formData.password !== formData.confirmPassword) {
+        showError('Паролите не съвпадат');
         return false;
     }
 
@@ -230,71 +478,76 @@ function validateFormData(data) {
 }
 
 /**
- * ВАЛИДИРА ПОТРЕБИТЕЛСКОТО ИМЕ В РЕАЛНО ВРЕМЕ
+ * ИЗЧИСТВАНЕ НА ФОРМАТА
  */
-async function validateUsername() {
-    const usernameInput = document.getElementById('username');
-    const username = usernameInput.value.trim();
+function clearForm() {
+    const form = document.getElementById('registrationForm');
+    if (form) {
+        form.reset();
 
-    if (username.length < 3) {
-        usernameInput.classList.add('invalid');
-        return false;
-    }
+        // Премахваме CSS класовете за валидация
+        form.querySelectorAll('.valid, .invalid').forEach(element => {
+            element.classList.remove('valid', 'invalid');
+        });
 
-    try {
-        // Проверяваме дали името е заето
-        const response = await fetch(`/api/auth/check-username?username=${encodeURIComponent(username)}`);
-        const result = await response.json();
-
-        if (result.exists) {
-            usernameInput.classList.add('invalid');
-            usernameInput.classList.remove('valid');
-            showError('Това потребителско име е заето');
-            return false;
-        } else {
-            usernameInput.classList.add('valid');
-            usernameInput.classList.remove('invalid');
-            hideError();
-            return true;
-        }
-    } catch (error) {
-        console.error('Error checking username:', error);
-        return true; // Не блокираме при мрежова грешка
+        // Обновяваме label позициите
+        initializeSelectFloatingLabels();
     }
 }
 
 /**
- * ВАЛИДИРА СИЛАТА НА ПАРОЛАТА
+ * ПОКАЗВАНЕ НА LOADING СЪСТОЯНИЕ
+ */
+function setRegistrationLoading(isLoading) {
+    const submitBtn = document.getElementById('registerBtn');
+    const form = document.getElementById('registrationForm');
+
+    if (submitBtn) {
+        submitBtn.disabled = isLoading;
+        submitBtn.textContent = isLoading ? 'Създаване...' : 'Създай потребител';
+    }
+
+    if (form) {
+        if (isLoading) {
+            form.classList.add('loading');
+        } else {
+            form.classList.remove('loading');
+        }
+    }
+}
+
+/**
+ * ВАЛИДАЦИЯ НА СИЛАТА НА ПАРОЛАТА
  */
 function validatePasswordStrength() {
     const passwordInput = document.getElementById('password');
-    const password = passwordInput.value;
+    const password = passwordInput?.value;
 
-    if (password.length < 4) {
-        passwordInput.classList.add('invalid');
-        passwordInput.classList.remove('valid');
-        return false;
-    } else {
+    if (!password) return false;
+
+    // Основна проверка за дължина
+    if (password.length >= 6) {
         passwordInput.classList.add('valid');
         passwordInput.classList.remove('invalid');
         return true;
+    } else {
+        passwordInput.classList.add('invalid');
+        passwordInput.classList.remove('valid');
+        return false;
     }
 }
 
 /**
- * ПРОВЕРЯВА ДАЛИ ПАРОЛИТЕ СЪВПАДАТ
+ * ВАЛИДАЦИЯ ЗА СЪВПАДЕНИЕ НА ПАРОЛИТЕ
  */
 function validatePasswordMatch() {
     const passwordInput = document.getElementById('password');
     const confirmPasswordInput = document.getElementById('confirmPassword');
 
-    const password = passwordInput.value;
-    const confirmPassword = confirmPasswordInput.value;
+    const password = passwordInput?.value;
+    const confirmPassword = confirmPasswordInput?.value;
 
-    if (confirmPassword.length === 0) {
-        confirmPasswordInput.classList.remove('valid', 'invalid');
-        return true;
-    }
+    if (!confirmPassword) return false;
 
     if (password === confirmPassword) {
         confirmPasswordInput.classList.add('valid');
@@ -308,97 +561,148 @@ function validatePasswordMatch() {
 }
 
 /**
- * ПОКАЗВАНЕ/СКРИВАНЕ НА ПАРОЛА
+ * ПРЕВКЛЮЧВАНЕ НА ВИДИМОСТТА НА ПАРОЛАТА
  */
 function togglePasswordVisibility(input, toggle) {
-    const isPassword = input.type === 'password';
-    input.type = isPassword ? 'text' : 'password';
-    toggle.textContent = isPassword ? '🙈' : '👁️';
-    toggle.title = isPassword ? 'Скрий парола' : 'Покажи парола';
-}
+    if (!input || !toggle) return;
 
-/**
- * ИЗЧИСТВА ФОРМАТА СЛЕД УСПЕШНА РЕГИСТРАЦИЯ
- */
-function clearForm() {
-    document.getElementById('registrationForm').reset();
-    document.getElementById('employeeSelect').selectedIndex = 0;
-    document.getElementById('roleUser').checked = true;
-
-    // Премахваме всички validation класове
-    document.querySelectorAll('.form-input, .form-select').forEach(input => {
-        input.classList.remove('valid', invalid');
-    });
-}
-
-/**
- * УПРАВЛЕНИЕ НА LOADING СЪСТОЯНИЕТО
- */
-function setRegistrationLoading(isLoading) {
-    const registerBtn = document.getElementById('registerBtn');
-    const form = document.getElementById('registrationForm');
-
-    if (isLoading) {
-        registerBtn.classList.add('loading');
-        registerBtn.disabled = true;
-        registerBtn.textContent = 'Създаване...';
-
-        // Деактивираме всички полета
-        form.querySelectorAll('input, select').forEach(input => {
-            input.disabled = true;
-        });
+    if (input.type === 'password') {
+        input.type = 'text';
+        toggle.textContent = '🙈';
+        toggle.title = 'Скрий парола';
     } else {
-        registerBtn.classList.remove('loading');
-        registerBtn.disabled = false;
-        registerBtn.textContent = 'Създай потребител';
-
-        // Активираме всички полета
-        form.querySelectorAll('input, select').forEach(input => {
-            input.disabled = false;
-        });
+        input.type = 'password';
+        toggle.textContent = '👁️';
+        toggle.title = 'Покажи парола';
     }
 }
 
 /**
- * ПОКАЗВАНЕ НА ГРЕШКА
+ * ФУНКЦИИ ЗА ПОКАЗВАНЕ НА СЪОБЩЕНИЯ
  */
 function showError(message) {
-    const errorMessage = document.getElementById('error-message');
-    const errorText = document.getElementById('error-text');
+    console.error('🚨 Error:', message);
 
-    errorText.innerHTML = message;
-    errorMessage.classList.add('show');
+    // Намираме елемента за грешки или създаваме такъв
+    let errorElement = document.getElementById('errorMessage');
+    if (!errorElement) {
+        errorElement = document.createElement('div');
+        errorElement.id = 'errorMessage';
+        errorElement.className = 'alert alert-error';
+        const form = document.getElementById('registrationForm');
+        if (form) {
+            form.parentNode.insertBefore(errorElement, form);
+        }
+    }
 
-    // Скриваме success съобщението ако е показано
-    hideSuccess();
+    errorElement.textContent = message;
+    errorElement.style.display = 'block';
+
+    // Автоматично скриване след 5 секунди
+    setTimeout(hideError, 5000);
 }
 
-/**
- * СКРИВАНЕ НА ГРЕШКА
- */
-function hideError() {
-    const errorMessage = document.getElementById('error-message');
-    errorMessage.classList.remove('show');
-}
-
-/**
- * ПОКАЗВАНЕ НА SUCCESS СЪОБЩЕНИЕ
- */
 function showSuccess(message) {
-    const successMessage = document.getElementById('success-message');
-    const successText = document.getElementById('success-text');
+    console.log('✅ Success:', message);
 
-    successText.textContent = message;
-    successMessage.classList.add('show');
+    let successElement = document.getElementById('successMessage');
+    if (!successElement) {
+        successElement = document.createElement('div');
+        successElement.id = 'successMessage';
+        successElement.className = 'alert alert-success';
+        const form = document.getElementById('registrationForm');
+        if (form) {
+            form.parentNode.insertBefore(successElement, form);
+        }
+    }
 
-    // Скриваме error съобщението ако е показано
-    hideError();
+    successElement.textContent = message;
+    successElement.style.display = 'block';
+
+    // Автоматично скриване след 3 секунди
+    setTimeout(hideSuccess, 3000);
+}
+
+function hideError() {
+    const errorElement = document.getElementById('errorMessage');
+    if (errorElement) {
+        errorElement.style.display = 'none';
+    }
+}
+
+function hideSuccess() {
+    const successElement = document.getElementById('successMessage');
+    if (successElement) {
+        successElement.style.display = 'none';
+    }
 }
 
 /**
- * СКРИВАНЕ НА SUCCESS СЪОБЩЕНИЕ
+ * ФУНКЦИИ ЗА ДЕБЪГВАНЕ
  */
-function hideSuccess() {
-    const successMessage = document.getElementById('success-message');
-    successMessage.classList.remove('show');
+function reloadEmployees() {
+    console.log('🔄 Manually reloading employees...');
+    loadAvailableEmployees();
 }
+
+async function testServerConnection() {
+    try {
+        console.log('🔍 Testing server connection...');
+
+        const response = await fetch('/api/auth/available-employees', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (response.ok) {
+            console.log('✅ Server connection successful');
+            showSuccess('Връзката със сървъра е успешна');
+            return true;
+        } else {
+            console.log('❌ Server responded with error:', response.status);
+            showError(`Грешка от сървъра: ${response.status}`);
+            return false;
+        }
+    } catch (error) {
+        console.log('❌ Cannot connect to server:', error.message);
+        showError('Не може да се свърже със сървъра. Проверете дали Spring Boot работи на порт 8080');
+        return false;
+    }
+}
+
+/**
+ * УПРАВЛЕНИЕ НА FLOATING LABELS ЗА SELECT ЕЛЕМЕНТИ
+ */
+function initializeSelectFloatingLabels() {
+    const selectElements = document.querySelectorAll('.form-select');
+
+    selectElements.forEach(select => {
+        const label = document.querySelector(`label[for='${select.id}']`);
+
+        if (label) {
+            updateLabelPosition(select, label);
+
+            select.addEventListener('change', () => updateLabelPosition(select, label));
+            select.addEventListener('focus', () => updateLabelPosition(select, label));
+            select.addEventListener('blur', () => updateLabelPosition(select, label));
+        }
+    });
+}
+
+function updateLabelPosition(select, label) {
+    if (select.value && select.value !== '') {
+        label.classList.add('active');
+    } else {
+        label.classList.remove('active');
+    }
+}
+
+// Добавяме функции в глобалния scope за дебъгване
+window.testServerConnection = testServerConnection;
+window.reloadEmployees = reloadEmployees;
+window.loadAvailableEmployeesWithFullURL = loadAvailableEmployeesWithFullURL;
+
+console.log('🔧 Registration Manager loaded successfully');
+console.log('💡 Debug functions available: testServerConnection(), reloadEmployees(), loadAvailableEmployeesWithFullURL()');
