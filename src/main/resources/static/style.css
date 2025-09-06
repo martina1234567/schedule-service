@@ -2527,12 +2527,13 @@ html body .fc-popover,
 }
 
 /* Специално за hourly rate select */
+/*
 #hourlyRate:not([value=""]) + label,
 #hourlyRate:valid + label {
     top: -10px;
     font-size: 12px;
     color: #007bff;
-}
+}*/
 
 
 /*бутон за допълнителен график*/
@@ -2555,4 +2556,1036 @@ html body .fc-popover,
     transform: translate(-50%, -50%);
     font-size: 18px !important;
     text-indent: 0 !important;
+}
+
+/* =================================
+   ВГРАДЕНИ LABELS ЗА POSITION И HOURLY RATE
+   Същия стил като Employee select
+   ================================= */
+
+/* ОБЩИ СТИЛОВЕ ЗА ВСИЧКИ SELECT ЕЛЕМЕНТИ С ВГРАДЕНИ LABELS */
+.form-control {
+    width: 100%;
+    padding: 16px 40px 12px 12px; /* Място за стрелката */
+    font-size: 16px;
+    border-radius: 8px;
+    border: 2px solid #A6CDFF;
+    background-color: #f3faff;
+    color: #333;
+    outline: none;
+    transition: all 0.3s ease;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    cursor: pointer;
+    box-sizing: border-box;
+    background-image: none; /* Премахва браузърни стрелки */
+}
+
+/* FOCUS СЪСТОЯНИЕ ЗА ВСИЧКИ SELECT */
+.form-control:focus {
+    border-color: #6fa3e8;
+    background-color: #e6f1ff;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    background-image: none !important;
+}
+
+/* HOVER ЕФЕКТ */
+.form-control:hover:not(:focus) {
+    border-color: #9bc5ff;
+    background-color: #f8fcff;
+}
+
+/* LABELS ВГРАДЕНИ В BORDER ЗА POSITION И HOURLY RATE */
+.form-group label[for="position"],
+.form-group label[for="hourlyRate"] {
+    position: absolute;
+    left: 12px;
+    top: 0;                      /* ВИНАГИ в топ позиция */
+    transform: translateY(-50%); /* Центрирано на border */
+    font-size: 12px;             /* ВИНАГИ малък размер */
+    color: #4d80e1;             /* ВИНАГИ син цвят */
+    background-color: white;     /* Бял фон за да прекъсне border */
+    padding: 0 4px;             /* Padding за разстояние от border */
+    pointer-events: none;
+    transition: none;           /* БЕЗ анимации */
+    z-index: 10;
+}
+
+/* ПРЕМАХВАМЕ ВСИЧКИ HOVER/FOCUS ЕФЕКТИ ЗА POSITION И HOURLY RATE LABELS */
+#position:focus + label[for="position"],
+#position:hover + label[for="position"],
+#hourlyRate:focus + label[for="hourlyRate"],
+#hourlyRate:hover + label[for="hourlyRate"],
+label[for="position"].active,
+label[for="hourlyRate"].active {
+    position: absolute;
+    left: 12px;
+    top: 0;
+    transform: translateY(-50%);
+    font-size: 12px;
+    color: #4d80e1;
+    background-color: white;
+    padding: 0 4px;
+    transition: none;
+}
+
+/* FOCUS ЕФЕКТ ЗА LABELS - ПО-НАСИТЕН ЦВЯТ */
+#position:focus + label[for="position"],
+#hourlyRate:focus + label[for="hourlyRate"] {
+    color: #2d5aa0 !important; /* По-тъмен син при focus */
+}
+
+/* CUSTOM СТРЕЛКИ ЗА POSITION И HOURLY RATE */
+.form-group:has(#position)::after,
+.form-group:has(#hourlyRate)::after {
+    content: "▼";
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #666;
+    pointer-events: none;
+    font-size: 12px;
+    transition: color 0.3s ease;
+}
+
+/* АКО :has() НЕ РАБОТИ В БРАУЗЪРА, ИЗПОЛЗВАЙ ТЕЗИ АЛТЕРНАТИВИ */
+/* Position стрелка */
+.form-group label[for="position"] + *::after,
+.form-group:focus-within:has(#position)::after {
+    content: "▼";
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #666;
+    pointer-events: none;
+    font-size: 12px;
+}
+
+/* Hourly Rate стрелка */
+.form-group label[for="hourlyRate"] + *::after,
+.form-group:focus-within:has(#hourlyRate)::after {
+    content: "▼";
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #666;
+    pointer-events: none;
+    font-size: 12px;
+}
+
+/* ПРОМЯНА НА СТРЕЛКИТЕ ПРИ FOCUS */
+.form-group:focus-within:has(#position)::after,
+.form-group:focus-within:has(#hourlyRate)::after {
+    color: #6fa3e8;
+}
+
+/* СКРИВАМЕ СТРЕЛКИТЕ КОГАТО SELECT ПОЛЕТАТА СА ОТВОРЕНИ */
+#position:focus + label + *::after,
+#hourlyRate:focus + label + *::after {
+    display: none;
+}
+
+/* ДОПЪЛНИТЕЛНИ СТИЛОВЕ ЗА ПРЕМАХВАНЕ НА БРАУЗЪРНИ СТРЕЛКИ */
+#position::-moz-focus-inner,
+#hourlyRate::-moz-focus-inner {
+    border: 0;
+}
+
+#position::-webkit-outer-spin-button,
+#position::-webkit-inner-spin-button,
+#hourlyRate::-webkit-outer-spin-button,
+#hourlyRate::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+#position:-moz-focusring,
+#hourlyRate:-moz-focusring {
+    color: transparent;
+    text-shadow: 0 0 0 #333;
+}
+
+/* OPTION ЕЛЕМЕНТИ */
+#position option,
+#hourlyRate option {
+    padding: 10px;
+    background-color: white;
+    color: #333;
+    font-size: 16px;
+}
+
+#position option[value=""][disabled],
+#hourlyRate option[value=""][disabled] {
+    color: #999;
+    font-style: italic;
+}
+
+/* VALIDATION СЪСТОЯНИЯ */
+#position.valid,
+#hourlyRate.valid {
+    border-color: #28a745;
+    background-color: #f8fff9;
+}
+
+#position.valid + label[for="position"],
+#hourlyRate.valid + label[for="hourlyRate"] {
+    color: #28a745;
+}
+
+#position.invalid,
+#hourlyRate.invalid {
+    border-color: #dc3545;
+    background-color: #fff8f8;
+}
+
+#position.invalid + label[for="position"],
+#hourlyRate.invalid + label[for="hourlyRate"] {
+    color: #dc3545;
+}
+
+/* LOADING СЪСТОЯНИЕ ЗА HOURLY RATE */
+#hourlyRate.loading::before {
+    content: '';
+    position: absolute;
+    right: 35px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 16px;
+    height: 16px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #6fa3e8;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    z-index: 5;
+}
+
+#hourlyRate.loading + label + *::after {
+    display: none;
+}
+
+/* RESPONSIVE СТИЛОВЕ */
+@media (max-width: 480px) {
+    .form-control {
+        font-size: 16px; /* Предотвратява zoom на iOS */
+        padding: 14px 35px 10px 10px;
+    }
+
+    label[for="position"],
+    label[for="hourlyRate"] {
+        font-size: 11px;
+        left: 10px;
+    }
+
+    .form-group:has(#position)::after,
+    .form-group:has(#hourlyRate)::after {
+        right: 12px;
+        font-size: 10px;
+    }
+}
+/* =================================
+   ВГРАДЕНИ LABELS ЗА РЕДАКТИРАНЕ НА СЛУЖИТЕЛ
+   Position и Hourly Rate в employee edit форма
+   ================================= */
+
+/* ОБЩИ СТИЛОВЕ ЗА ВСИЧКИ .form-control SELECT ЕЛЕМЕНТИ */
+.form-control[id="position"],
+.form-control[id="hourlyRate"],
+.form-control.hourly-rate-select {
+    width: 100%;
+    padding: 16px 40px 12px 12px; /* Място за стрелката */
+    font-size: 16px;
+    border-radius: 8px;
+    border: 2px solid #A6CDFF;
+    background-color: #f3faff;
+    color: #333;
+    outline: none;
+    transition: all 0.3s ease;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    cursor: pointer;
+    box-sizing: border-box;
+    background-image: none; /* Премахва браузърни стрелки */
+}
+
+/* FOCUS СЪСТОЯНИЕ */
+.form-control[id="position"]:focus,
+.form-control[id="hourlyRate"]:focus,
+.form-control.hourly-rate-select:focus {
+    border-color: #6fa3e8;
+    background-color: #e6f1ff;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    background-image: none !important;
+}
+
+/* HOVER ЕФЕКТ */
+.form-control[id="position"]:hover:not(:focus),
+.form-control[id="hourlyRate"]:hover:not(:focus),
+.form-control.hourly-rate-select:hover:not(:focus) {
+    border-color: #9bc5ff;
+    background-color: #f8fcff;
+}
+
+/* ВГРАДЕНИ LABELS В BORDER ЗА EDIT ФОРМАТА */
+.form-group label[for="position"],
+.form-group label[for="hourlyRate"] {
+    position: absolute;
+    left: 12px;
+    top: 0;                      /* ВИНАГИ в топ позиция */
+    transform: translateY(-50%); /* Центрирано на border */
+    font-size: 12px;             /* ВИНАГИ малък размер */
+    color: #4d80e1;             /* ВИНАГИ син цвят */
+    background-color: white;     /* Бял фон за да прекъсне border */
+    padding: 0 4px;             /* Padding за разстояние от border */
+    pointer-events: none;
+    transition: none;           /* БЕЗ анимации */
+    z-index: 10;
+}
+
+/* ПРЕМАХВАМЕ ВСИЧКИ HOVER/FOCUS ЕФЕКТИ ЗА LABELS */
+.form-control[id="position"]:focus + label[for="position"],
+.form-control[id="position"]:hover + label[for="position"],
+.form-control[id="hourlyRate"]:focus + label[for="hourlyRate"],
+.form-control[id="hourlyRate"]:hover + label[for="hourlyRate"],
+.form-group label[for="position"].active,
+.form-group label[for="hourlyRate"].active {
+    position: absolute;
+    left: 12px;
+    top: 0;
+    transform: translateY(-50%);
+    font-size: 12px;
+    color: #4d80e1;
+    background-color: white;
+    padding: 0 4px;
+    transition: none;
+}
+
+/* FOCUS ЕФЕКТ ЗА LABELS - ПО-НАСИТЕН ЦВЯТ */
+.form-control[id="position"]:focus + label[for="position"],
+.form-control[id="hourlyRate"]:focus + label[for="hourlyRate"] {
+    color: #2d5aa0 !important; /* По-тъмен син при focus */
+}
+
+/* CUSTOM СТРЕЛКИ ЗА EDIT ФОРМАТА */
+.form-group:has(.form-control[id="position"])::after,
+.form-group:has(.form-control[id="hourlyRate"])::after,
+.form-group:has(.form-control.hourly-rate-select)::after {
+    content: "▼";
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #666;
+    pointer-events: none;
+    font-size: 12px;
+    transition: color 0.3s ease;
+}
+
+/* АКО :has() НЕ РАБОТИ В БРАУЗЪРА, АЛТЕРНАТИВНИ СЕЛЕКТОРИ */
+/* За position поле в edit форма */
+.form-group .form-control[id="position"] + label::after {
+    content: "▼";
+    position: absolute;
+    right: -15px; /* Adjust based on form-group structure */
+    top: 50%;
+    transform: translateY(-50%);
+    color: #666;
+    pointer-events: none;
+    font-size: 12px;
+    z-index: 5;
+}
+
+/* За hourly rate поле в edit форма */
+.form-group .form-control[id="hourlyRate"] + label::after,
+.form-group .form-control.hourly-rate-select + label::after {
+    content: "▼";
+    position: absolute;
+    right: -15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #666;
+    pointer-events: none;
+    font-size: 12px;
+    z-index: 5;
+}
+
+/* СТРЕЛКА ДИРЕКТНО В FORM-GROUP (най-сигурен начин) */
+#employeeForm .form-group:nth-child(4)::after, /* Position field */
+#employeeForm .form-group:nth-child(5)::after  /* Hourly Rate field */ {
+    content: "▼";
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #666;
+    pointer-events: none;
+    font-size: 12px;
+    transition: color 0.3s ease;
+}
+
+/* ПРОМЯНА НА СТРЕЛКИТЕ ПРИ FOCUS */
+.form-control[id="position"]:focus ~ *::after,
+.form-control[id="hourlyRate"]:focus ~ *::after,
+#employeeForm .form-group:focus-within::after {
+    color: #6fa3e8;
+}
+
+/* СКРИВАМЕ СТРЕЛКИТЕ КОГАТО SELECT ПОЛЕТАТА СА ОТВОРЕНИ */
+.form-control[id="position"]:focus + label + *::after,
+.form-control[id="hourlyRate"]:focus + label + *::after,
+#employeeForm .form-group:focus-within::after {
+    display: none;
+}
+
+/* ДОПЪЛНИТЕЛНИ СТИЛОВЕ ЗА ПРЕМАХВАНЕ НА БРАУЗЪРНИ СТРЕЛКИ */
+.form-control[id="position"]::-moz-focus-inner,
+.form-control[id="hourlyRate"]::-moz-focus-inner {
+    border: 0;
+}
+
+.form-control[id="position"]::-webkit-outer-spin-button,
+.form-control[id="position"]::-webkit-inner-spin-button,
+.form-control[id="hourlyRate"]::-webkit-outer-spin-button,
+.form-control[id="hourlyRate"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.form-control[id="position"]:-moz-focusring,
+.form-control[id="hourlyRate"]:-moz-focusring {
+    color: transparent;
+    text-shadow: 0 0 0 #333;
+}
+
+/* OPTION ЕЛЕМЕНТИ */
+.form-control[id="position"] option,
+.form-control[id="hourlyRate"] option,
+.form-control.hourly-rate-select option {
+    padding: 10px;
+    background-color: white;
+    color: #333;
+    font-size: 16px;
+}
+
+.form-control[id="position"] option[value=""][disabled],
+.form-control[id="hourlyRate"] option[value=""][disabled],
+.form-control.hourly-rate-select option[value=""][disabled] {
+    color: #999;
+    font-style: italic;
+}
+
+/* VALIDATION СЪСТОЯНИЯ */
+.form-control[id="position"].valid,
+.form-control[id="hourlyRate"].valid {
+    border-color: #28a745;
+    background-color: #f8fff9;
+}
+
+.form-control[id="position"].valid + label[for="position"],
+.form-control[id="hourlyRate"].valid + label[for="hourlyRate"] {
+    color: #28a745;
+}
+
+.form-control[id="position"].invalid,
+.form-control[id="hourlyRate"].invalid {
+    border-color: #dc3545;
+    background-color: #fff8f8;
+}
+
+.form-control[id="position"].invalid + label[for="position"],
+.form-control[id="hourlyRate"].invalid + label[for="hourlyRate"] {
+    color: #dc3545;
+}
+
+/* LOADING СЪСТОЯНИЕ ЗА HOURLY RATE В EDIT ФОРМА */
+.form-control[id="hourlyRate"].loading::before,
+.form-control.hourly-rate-select.loading::before {
+    content: '';
+    position: absolute;
+    right: 35px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 16px;
+    height: 16px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #6fa3e8;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    z-index: 5;
+}
+
+.form-control[id="hourlyRate"].loading + label + *::after,
+.form-control.hourly-rate-select.loading + label + *::after {
+    display: none;
+}
+
+/* RESPONSIVE СТИЛОВЕ */
+@media (max-width: 480px) {
+    .form-control[id="position"],
+    .form-control[id="hourlyRate"],
+    .form-control.hourly-rate-select {
+        font-size: 16px; /* Предотвратява zoom на iOS */
+        padding: 14px 35px 10px 10px;
+    }
+
+    .form-group label[for="position"],
+    .form-group label[for="hourlyRate"] {
+        font-size: 11px;
+        left: 10px;
+    }
+
+    #employeeForm .form-group:nth-child(4)::after,
+    #employeeForm .form-group:nth-child(5)::after {
+        right: 12px;
+        font-size: 10px;
+    }
+}
+
+/* OVERRIDE ЗА КОНФЛИКТИ С ДРУГИ CSS ФАЙЛОВЕ */
+.form-control[id="position"],
+.form-control[id="hourlyRate"],
+.form-control.hourly-rate-select {
+    /* Ensure these styles take precedence */
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    background-image: none !important;
+}
+
+/* OVERRIDE ЗА LABELS */
+.form-group label[for="position"],
+.form-group label[for="hourlyRate"] {
+    position: absolute !important;
+    left: 12px !important;
+    top: 0 !important;
+    transform: translateY(-50%) !important;
+    font-size: 12px !important;
+    color: #4d80e1 !important;
+    background-color: #f3faff !important;
+    padding: 0 4px !important;
+    transition: none !important;
+}
+
+/* ПРЕМАХВАМЕ ВСИЧКИ ПРОБЛЕМНИ СТРЕЛКИЧКИ */
+
+/* 1. ПРЕМАХВАМЕ ::after ОТ LABELS */
+.form-group label[for="position"]::after,
+.form-group label[for="hourlyRate"]::after {
+    display: none !important;
+}
+
+/* 2. ПРЕМАХВАМЕ ВСИЧКИ СТАРИТЕ СТРЕЛКИ СЕЛЕКТОРИ */
+.form-group .form-control[id="position"] + label::after,
+.form-group .form-control[id="hourlyRate"] + label::after,
+.form-group .form-control.hourly-rate-select + label::after {
+    display: none !important;
+}
+
+/* 3. ПРАВИЛНИТЕ СТРЕЛКИ - САМО В FORM-GROUP */
+.form-group:has(#position)::after {
+    content: "▼";
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #666;
+    pointer-events: none;
+    font-size: 12px;
+    transition: color 0.3s ease;
+}
+
+.form-group:has(#hourlyRate)::after {
+    content: "▼";
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #666;
+    pointer-events: none;
+    font-size: 12px;
+    transition: color 0.3s ease;
+}
+
+/* АКО :has() НЕ РАБОТИ, ИЗПОЛЗВАЙ ТЕЗИ */
+.form-group:nth-child(4)::after, /* За position поле */
+.form-group:nth-child(5)::after  /* За hourly rate поле */ {
+    content: "▼";
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #666;
+    pointer-events: none;
+    font-size: 12px;
+    transition: color 0.3s ease;
+}
+
+/* FOCUS ЕФЕКТИ */
+.form-group:focus-within::after {
+    color: #6fa3e8;
+}
+
+/* СКРИВАМЕ ПРИ ОТВОРЕН SELECT */
+.form-group:focus-within::after {
+    display: none;
+}
+
+/* ЕДНАКВИ LABELS В EMPLOYEE ФОРМА - КАТО SELECT ЕЛЕМЕНТИТЕ */
+#employeeForm .form-group label {
+    position: absolute;
+    left: 12px;
+    top: 0;                           /* Всички labels в border позиция */
+    transform: translateY(-50%);
+    font-family: Arial, sans-serif;
+    font-size: 12px;                  /* Еднакъв размер като select labels */
+    font-weight: normal;              /* Без удебеляване */
+    color: #4d80e1;                  /* Еднакъв син цвят като select */
+    background-color: white;          /* Бял фон за прекъсване на border */
+    padding: 0 4px;
+    pointer-events: none;
+    transition: none;                 /* Без анимации */
+    z-index: 10;
+}
+
+/* ПРЕМАХВАМЕ FLOATING ЕФЕКТИТЕ - ВСИЧКИ LABELS СТАТИЧНИ */
+#employeeForm input:focus + label,
+#employeeForm input:not(:placeholder-shown) + label,
+#employeeForm select:focus + label,
+#employeeForm .form-group label.active {
+    position: absolute;
+    left: 12px;
+    top: 0;                          /* Винаги в border позиция */
+    transform: translateY(-50%);
+    font-family: Arial, sans-serif;
+    font-size: 12px;                 /* Винаги същия размер */
+    font-weight: normal;             /* Винаги без удебеляване */
+    color: #4d80e1;                 /* Винаги същия цвят */
+    background-color: white;
+    padding: 0 4px;
+    transition: none;
+}
+
+/* FOCUS ЕФЕКТ - САМО ПО-НАСИТЕН ЦВЯТ */
+#employeeForm input:focus + label,
+#employeeForm select:focus + label {
+    color: #2d5aa0 !important;       /* По-тъмен син при focus */
+}
+
+/* INPUT ПОЛЕТА - FLOATING LABELS */
+#employeeForm input.form-control + label {
+    position: absolute;
+    left: 12px;
+    top: 50%;                        /* Започва в средата на полето */
+    transform: translateY(-50%);
+    font-family: Arial, sans-serif;
+    font-size: 14px;                 /* Нормален размер */
+    font-weight: normal;
+    color: #000000;                     /* Сив цвят в нормално състояние */
+    background-color: transparent;
+    padding: 0 4px;
+    pointer-events: none;
+    transition: all 0.3s ease;       /* Smooth анимация */
+    z-index: 10;
+}
+
+/* FLOATING ЕФЕКТ ЗА INPUT LABELS */
+#employeeForm input.form-control:focus + label,
+#employeeForm input.form-control:not(:placeholder-shown) + label {
+    top: 0;                          /* Плава нагоре до border */
+    transform: translateY(-50%);
+    font-size: 12px;                 /* Става по-малък */
+    color: #4d80e1;                 /* Става син */
+    background-color: #f3faff;         /* Бял фон за прекъсване на border */
+}
+
+/* SELECT ПОЛЕТА - СТАТИЧНИ LABELS (без промяна) */
+#employeeForm select.form-control + label {
+    position: absolute;
+    left: 12px;
+    top: 0;                          /* Винаги в border позиция */
+    transform: translateY(-50%);
+    font-family: Arial, sans-serif;
+    font-size: 12px;                 /* Винаги малък */
+    font-weight: normal;
+    color: #4d80e1;                 /* Винаги син */
+    background-color: #f3faff;
+    padding: 0 4px;
+    pointer-events: none;
+    transition: none;                /* Без анимации */
+    z-index: 10;
+}
+
+/* ЕДНАКВА ГОЛЕМИНА НА ШРИФТА ЗА ВСИЧКИ ПОЛЕТА В EMPLOYEE ФОРМА */
+#employeeForm input.form-control,
+#employeeForm select.form-control,
+#employeeForm input[type="text"],
+#employeeForm select {
+    font-family: Arial, sans-serif;
+    font-size: 14px;                 /* Еднаква големина за всички */
+    font-weight: normal;
+    letter-spacing: normal;
+}
+
+/* ЕДНАКВА ГОЛЕМИНА ЗА OPTION ЕЛЕМЕНТИТЕ */
+#employeeForm select option {
+    font-family: Arial, sans-serif;
+    font-size: 14px;                 /* Същата големина като полетата */
+    font-weight: normal;
+}
+
+/* OVERRIDE ЗА ВСИЧКИ ВЪЗМОЖНИ КОНФЛИКТИ */
+#name,
+#lastname,
+#email,
+#position,
+#hourlyRate {
+    font-family: Arial, sans-serif !important;
+    font-size: 14px !important;      /* Еднаква големина за всички */
+    font-weight: normal !important;
+    letter-spacing: normal !important;
+}
+/* =================================
+   ФИКСИРАНИ LABELS ЗА EVENT ФОРМА
+   Activity и Leave Type като Position и Hourly Rate
+   ================================= */
+
+/* SELECT ЕЛЕМЕНТИ В EVENT ФОРМАТА */
+#activityInput.activity-select,
+#leaveType.form-control,
+#edit-activity.activity-select {
+    width: 100%;
+    padding: 16px 40px 12px 12px; /* Място за стрелката */
+    font-size: 16px;
+    border-radius: 8px;
+    border: 2px solid #A6CDFF;
+    background-color: #f3faff;
+    color: #333;
+    outline: none;
+    transition: all 0.3s ease;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    cursor: pointer;
+    box-sizing: border-box;
+    background-image: none; /* Премахва браузърни стрелки */
+}
+
+/* FOCUS СЪСТОЯНИЕ */
+#activityInput.activity-select:focus,
+#leaveType.form-control:focus,
+#edit-activity.activity-select:focus {
+    border-color: #6fa3e8;
+    background-color: #e6f1ff;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    background-image: none !important;
+}
+
+/* HOVER ЕФЕКТ */
+#activityInput.activity-select:hover:not(:focus),
+#leaveType.form-control:hover:not(:focus),
+#edit-activity.activity-select:hover:not(:focus) {
+    border-color: #9bc5ff;
+    background-color: #f8fcff;
+}
+
+/* ФИКСИРАНИ LABELS В BORDER */
+.form-group1 label[for="activityInput"],
+.form-group1 label[for="leaveType"],
+.form-group1 label[for="edit-activity"] {
+    position: absolute;
+    left: 12px;
+    top: 0;                      /* ВИНАГИ в топ позиция */
+    transform: translateY(-50%); /* Центрирано на border */
+    font-size: 12px;             /* ВИНАГИ малък размер */
+    color: #4d80e1;             /* ВИНАГИ син цвят */
+    font-family: Arial, sans-serif;
+    font-weight: normal;
+    background-color: white;     /* Бял фон за да прекъсне border */
+    padding: 0 4px;             /* Padding за разстояние от border */
+    pointer-events: none;
+    transition: none;           /* БЕЗ анимации */
+    z-index: 10;
+}
+
+/* ПРЕМАХВАМЕ ВСИЧКИ FLOATING ЕФЕКТИ */
+.form-group1 .floating-label,
+.form-group1 label[for="activityInput"],
+.form-group1 label[for="leaveType"],
+.form-group1 label[for="edit-activity"] {
+    position: absolute !important;
+    left: 12px !important;
+    top: 0 !important;
+    transform: translateY(-50%) !important;
+    font-size: 12px !important;
+    color: #4d80e1 !important;
+    font-family: Arial, sans-serif !important;
+    font-weight: normal !important;
+    background-color: #f3faff !important;
+    padding: 0 4px !important;
+    transition: none !important;
+}
+
+/* ПРЕМАХВАМЕ FLOATING КЛАСОВЕ */
+.form-group1 .floating-label.floating,
+.form-group1 label[for="activityInput"].floating,
+.form-group1 label[for="leaveType"].floating,
+.form-group1 label[for="edit-activity"].floating {
+    position: absolute !important;
+    left: 12px !important;
+    top: 0 !important;
+    transform: translateY(-50%) !important;
+    font-size: 12px !important;
+    color: #4d80e1 !important;
+    background-color: white !important;
+    padding: 0 4px !important;
+}
+
+/* FOCUS ЕФЕКТ ЗА LABELS - ПО-НАСИТЕН ЦВЯТ */
+#activityInput:focus + label,
+#leaveType:focus + label,
+#edit-activity:focus + label {
+    color: #2d5aa0 !important; /* По-тъмен син при focus */
+}
+
+/* CUSTOM СТРЕЛКИ ЗА EVENT ФОРМА */
+.form-group1:has(#activityInput)::after,
+.form-group1:has(#leaveType)::after,
+.form-group1:has(#edit-activity)::after {
+    content: "▼";
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #666;
+    pointer-events: none;
+    font-size: 12px;
+    transition: color 0.3s ease;
+}
+
+/* АКО :has() НЕ РАБОТИ, АЛТЕРНАТИВНИ СЕЛЕКТОРИ */
+.form-group1:nth-child(3)::after, /* Activity поле */
+.form-group1:nth-child(4)::after  /* Leave Type поле */ {
+    content: "▼";
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #666;
+    pointer-events: none;
+    font-size: 12px;
+    transition: color 0.3s ease;
+}
+
+/* ПРОМЯНА НА СТРЕЛКИТЕ ПРИ FOCUS */
+.form-group1:focus-within::after {
+    color: #6fa3e8;
+}
+
+/* СКРИВАМЕ СТРЕЛКИТЕ КОГАТО SELECT ПОЛЕТАТА СА ОТВОРЕНИ */
+.form-group1:focus-within::after {
+    display: none;
+}
+
+/* ПРЕМАХВАМЕ БРАУЗЪРНИ СТРЕЛКИ */
+#activityInput::-moz-focus-inner,
+#leaveType::-moz-focus-inner,
+#edit-activity::-moz-focus-inner {
+    border: 0;
+}
+
+#activityInput::-webkit-outer-spin-button,
+#activityInput::-webkit-inner-spin-button,
+#leaveType::-webkit-outer-spin-button,
+#leaveType::-webkit-inner-spin-button,
+#edit-activity::-webkit-outer-spin-button,
+#edit-activity::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+#activityInput:-moz-focusring,
+#leaveType:-moz-focusring,
+#edit-activity:-moz-focusring {
+    color: transparent;
+    text-shadow: 0 0 0 #333;
+}
+
+/* OPTION ЕЛЕМЕНТИ */
+#activityInput option,
+#leaveType option,
+#edit-activity option {
+    padding: 10px;
+    background-color: white;
+    color: #333;
+    font-size: 16px;
+}
+
+#activityInput option[value=""][disabled],
+#leaveType option[value=""][disabled],
+#edit-activity option[value=""][disabled] {
+    color: #999;
+    font-style: italic;
+}
+
+/* VALIDATION СЪСТОЯНИЯ */
+#activityInput.valid,
+#leaveType.valid,
+#edit-activity.valid {
+    border-color: #28a745;
+    background-color: #f8fff9;
+}
+
+#activityInput.valid + label,
+#leaveType.valid + label,
+#edit-activity.valid + label {
+    color: #28a745;
+}
+
+#activityInput.invalid,
+#leaveType.invalid,
+#edit-activity.invalid {
+    border-color: #dc3545;
+    background-color: #fff8f8;
+}
+
+#activityInput.invalid + label,
+#leaveType.invalid + label,
+#edit-activity.invalid + label {
+    color: #dc3545;
+}
+
+/* LOADING СЪСТОЯНИЕ ЗА ACTIVITY */
+#activityInput.loading::before,
+#edit-activity.loading::before {
+    content: '';
+    position: absolute;
+    right: 35px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 16px;
+    height: 16px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #6fa3e8;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    z-index: 5;
+}
+
+#activityInput.loading + label + *::after,
+#edit-activity.loading + label + *::after {
+    display: none;
+}
+
+/* RESPONSIVE СТИЛОВЕ */
+@media (max-width: 480px) {
+    #activityInput.activity-select,
+    #leaveType.form-control,
+    #edit-activity.activity-select {
+        font-size: 16px; /* Предотвратява zoom на iOS */
+        padding: 14px 35px 10px 10px;
+    }
+
+    .form-group1 label[for="activityInput"],
+    .form-group1 label[for="leaveType"],
+    .form-group1 label[for="edit-activity"] {
+        font-size: 11px;
+        left: 10px;
+    }
+
+    .form-group1:nth-child(3)::after,
+    .form-group1:nth-child(4)::after {
+        right: 12px;
+        font-size: 10px;
+    }
+}
+
+/* OVERRIDE ЗА КОНФЛИКТИ */
+#activityInput,
+#leaveType,
+#edit-activity {
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    background-image: none !important;
+}
+
+/* ПРЕМАХВАМЕ ВСИЧКИ СТРЕЛКИ ОТ LABELS */
+.form-group1 label[for="activityInput"]::after,
+.form-group1 label[for="leaveType"]::after,
+.form-group1 label[for="edit-activity"]::after {
+    display: none !important;
+}
+/* ЕДНАКЪВ ШРИФТ ЗА ACTIVITY И LEAVE TYPE LABELS */
+.form-group1 label[for="activityInput"],
+.form-group1 label[for="leaveType"],
+.form-group1 label[for="edit-activity"] {
+    font-family: Arial, sans-serif !important;
+    font-size: 12px !important;
+    font-weight: normal !important;
+    letter-spacing: normal !important;
+    color: #4d80e1 !important;
+}
+
+/* ЕДНАКЪВ ШРИФТ ЗА SELECT ПОЛЕТАТА В EVENT ФОРМА */
+#activityInput,
+#leaveType,
+#edit-activity {
+    font-family: Arial, sans-serif !important;
+    font-size: 14px !important;
+    font-weight: normal !important;
+    letter-spacing: normal !important;
+}
+
+/* ЕДНАКЪВ ШРИФТ ЗА OPTION ЕЛЕМЕНТИТЕ */
+#activityInput option,
+#leaveType option,
+#edit-activity option {
+    font-family: Arial, sans-serif !important;
+    font-size: 14px !important;
+    font-weight: normal !important;
+}
+
+/* FOCUS ЕФЕКТ - СЪЩИЯ ЦВЯТ КАТО POSITION И HOURLY RATE */
+#activityInput:focus + label,
+#leaveType:focus + label,
+#edit-activity:focus + label {
+    color: #2d5aa0 !important;
+    font-family: Arial, sans-serif !important;
+    font-weight: normal !important;
+}
+/* ПРЕМАХВАМЕ СТРЕЛКИ САМО ОТ TIME INPUT ПОЛЕТА */
+input[type="time"]::-webkit-calendar-picker-indicator {
+    /* ЗАПАЗВАМЕ часовника - НЕ скриваме */
+}
+
+/* ПРЕМАХВАМЕ CUSTOM СТРЕЛКИТЕ ОТ FORM-GROUP1 С TIME INPUT */
+.form-group1:has(input[type="time"])::after {
+    display: none !important;
+}
+
+/* АЛТЕРНАТИВЕН НАЧИН - СПЕЦИФИКИРАЙ КОНКРЕТНИТЕ ПОЛЕТА */
+.form-group1:has(#start-time)::after,
+.form-group1:has(#end-time)::after,
+.form-group1:has(#edit-start-time)::after,
+.form-group1:has(#edit-end-time)::after {
+    display: none !important;
+}
+
+/* АКО :has() НЕ РАБОТИ, ИЗПОЛЗВАЙ ПО ПОЗИЦИЯ */
+.form-group1:nth-child(1)::after, /* Start time поле */
+.form-group1:nth-child(2)::after  /* End time поле */ {
+    display: none !important;
+}
+
+/* УВЕРЯВАМЕ СЕ, ЧЕ ЧАСОВНИКА СЕ ВИЖДА */
+#start-time::-webkit-calendar-picker-indicator,
+#end-time::-webkit-calendar-picker-indicator,
+#edit-start-time::-webkit-calendar-picker-indicator,
+#edit-end-time::-webkit-calendar-picker-indicator {
+    opacity: 1 !important;
+    display: block !important;
 }

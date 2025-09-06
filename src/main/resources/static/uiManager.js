@@ -50,7 +50,7 @@ function setupNavigationHandlers() {
 function goToHomePage() {
     // Store state to hide search on home page
     sessionStorage.setItem('hideSearch', 'true');
-    window.location.href = 'http://localhost:8080/';
+    window.location.href = 'http://localhost:8080/index.html';
 }
 
 /**
