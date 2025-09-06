@@ -17,6 +17,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 		"com.example.schedule.controller",
 		"com.example.schedule.service",      // Сканираме service пакета (където сме)
 		"com.example.schedule.repository",   // Сканираме repository пакета
+		"com.example.schedule.config",
 		"com.example.schedule.exception"     // Сканираме exception пакета
 })
 public class ScheduleApplication {

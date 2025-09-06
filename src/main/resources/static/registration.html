@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Registration - Schedule Management System</title>
+    <link rel="stylesheet" href="loginStyle.css">
+</head>
+<body>
+<!-- TWINGO ЛОГО В ГОРНИЯ ЛЯВ ЪГЪЛ -->
+<div class="twingo-logo-container">
+    <img src="images/logo.png" alt="Twingo Logo" class="twingo-main-logo">
+</div>
+
+<!-- ОСНОВЕН КОНТЕЙНЕР ЗА РЕГИСТРАЦИЯ -->
+<div class="login-container registration-container">
+    <!-- HEADER -->
+    <div class="login-header">
+        <div class="login-logo">
+            <!-- Количка в кръгчето -->
+        </div>
+        <h1>Регистрация на потребител</h1>
+        <p>Добавяне на нов потребителски акаунт в системата</p>
+    </div>
+
+    <!-- SUCCESS СЪОБЩЕНИЯ -->
+    <div id="success-message" class="success-message" role="alert">
+        <span id="success-text"></span>
+    </div>
+
+    <!-- ERROR СЪОБЩЕНИЯ -->
+    <div id="error-message" class="error-message" role="alert">
+        <span id="error-text"></span>
+    </div>
+
+    <!-- РЕГИСТРАЦИОННА ФОРМА -->
+    <form class="login-form" id="registrationForm" novalidate>
+
+        <!-- ИЗБОР НА СЛУЖИТЕЛ -->
+        <div class="form-group select-group">
+            <select id="employeeSelect" class="form-select" required>
+                <option value="" disabled selected>Зареждане на служители...</option>
+            </select>
+            <label for="employeeSelect" class="form-label active">Служител</label>
+        </div>
+
+        <!-- ПОТРЕБИТЕЛСКО ИМЕ -->
+        <div class="form-group">
+            <input
+                    type="text"
+                    id="username"
+                    class="form-input"
+                    placeholder=" "
+                    autocomplete="username"
+                    required
+                    minlength="3"
+                    maxlength="50"
+            >
+            <label for="username" class="form-label">Потребителско име</label>
+        </div>
+
+        <!-- ПАРОЛА -->
+        <div class="form-group">
+            <input
+                    type="password"
+                    id="password"
+                    class="form-input"
+                    placeholder=" "
+                    autocomplete="new-password"
+                    required
+                    minlength="4"
+                    maxlength="50"
+            >
+            <label for="password" class="form-label">Парола</label>
+            <button type="button" class="password-toggle" id="passwordToggle" title="Покажи/скрий парола">
+                👁️
+            </button>
+        </div>
+
+        <!-- ПОТВЪРЖДЕНИЕ НА ПАРОЛА -->
+        <div class="form-group">
+            <input
+                    type="password"
+                    id="confirmPassword"
+                    class="form-input"
+                    placeholder=" "
+                    autocomplete="new-password"
+                    required
+                    minlength="4"
+                    maxlength="50"
+            >
+            <label for="confirmPassword" class="form-label">Потвърждение на парола</label>
+            <button type="button" class="password-toggle" id="confirmPasswordToggle" title="Покажи/скрий парола">
+                👁️
+            </button>
+        </div>
+
+        <!-- ИЗБОР НА РОЛЯ -->
+        <div class="role-selector">
+            <div class="role-option">
+                <input type="radio" id="roleUser" name="role" value="user" class="role-radio" checked>
+                <label for="roleUser" class="role-label">👤 Потребител</label>
+            </div>
+            <div class="role-option">
+                <input type="radio" id="roleAdmin" name="role" value="admin" class="role-radio">
+                <label for="roleAdmin" class="role-label">👑 Администратор</label>
+            </div>
+        </div>
+
+        <!-- БУТОН ЗА РЕГИСТРАЦИЯ -->
+        <button type="submit" class="login-btn" id="registerBtn">
+            Създай потребител
+        </button>
+    </form>
+
+    <!-- ВРЪЗКИ -->
+    <div style="text-align: center; margin-top: 20px;">
+        <a href="login.html" style="color: #007bff; text-decoration: none; font-size: 14px;">
+            ← Обратно към логин
+        </a>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="login-footer">
+        <p>&copy; 2025 <span class="twingo-brand">Twingo</span>. Всички права запазени.</p>
+    </div>
+</div>
+<script src="registrationManager.js" defer></script>
+</body>
+</html>

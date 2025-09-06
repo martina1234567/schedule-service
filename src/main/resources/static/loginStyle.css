@@ -322,3 +322,39 @@
         .twingo-brand:hover {
             color: #0056b3;          /* По-тъмен син при hover */
         }
+
+        /* ДОБАВЕТЕ ТЕЗИ СТИЛОВЕ КЪМ loginStyle.css */
+
+        /* SUCCESS СЪОБЩЕНИЯ */
+        .error-message.success {
+            background-color: #d4edda !important;
+            color: #155724 !important;
+            border-color: #c3e6cb !important;
+        }
+
+        .error-message.success::before {
+            content: "✅ ";
+        }
+
+        /* LOADING СЪСТОЯНИЕ НА БУТОНА */
+        .login-btn.loading {
+            background: #6c757d !important;
+            cursor: not-allowed !important;
+            opacity: 0.7;
+        }
+
+        .login-btn.loading::after {
+            content: "";
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            margin-left: 8px;
+            border: 2px solid #ffffff;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
