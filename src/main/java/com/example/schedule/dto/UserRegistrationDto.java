@@ -1,102 +1,127 @@
 package com.example.schedule.dto;
 
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
+import java.util.regex.Pattern;
 
 /**
- * DTO ЗА РЕГИСТРАЦИЯ НА НОВИ ПОТРЕБИТЕЛИ
- * Използва се когато администратор създава нови потребителски акаунти
- * Съдържа всички необходими данни за създаване на User entity
+ * DATA TRANSFER OBJECT ЗА РЕГИСТРАЦИЯ НА ПОТРЕБИТЕЛИ
+ *
+ * Този DTO се използва за прехвърляне на данни от frontend към backend
+ * при създаване на нови потребителски акаунти в системата.
+ *
+ * Включва всички необходими валидации за създаване на сигурни потребителски акаунти:
+ * - Username с поне 7 символа, главна буква и специален знак
+ * - Парола с минимум 8 символа
+ * - Потвърждение на парола
+ * - Избор на служител от базата данни
+ * - Задаване на роля (admin/user)
  *
  * @author Schedule Management System
- * @version 1.0
+ * @version 2.0
  */
 public class UserRegistrationDto {
 
     // ===============================
-    // ПОЛЕТА ЗА РЕГИСТРАЦИЯ
+    // КОНСТАНТИ ЗА ВАЛИДАЦИЯ
     // ===============================
 
     /**
-     * Потребителско име за новия акаунт
-     * Трябва да е уникално в системата
+     * Regex pattern за проверка на специални символи в username
+     * Позволени специални символи: !@#$%^&*()_+-=[]{}|;':\",./<>?
      */
-    @NotNull(message = "Потребителското име не може да бъде празно")
-    @Size(min = 3, max = 50, message = "Потребителското име трябва да е между 3 и 50 символа")
+    private static final String SPECIAL_CHARS_PATTERN = "[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?]";
+
+    /**
+     * Regex pattern за проверка на главни букви
+     */
+    private static final String UPPERCASE_PATTERN = "[A-Z]";
+
+    // ===============================
+    // ПОЛЕТА НА DTO
+    // ===============================
+
+    /**
+     * Потребителско име за логин
+     * Изисквания:
+     * - Минимум 7 символа
+     * - Максимум 50 символа
+     * - Поне една главна буква
+     * - Поне един специален знак
+     * - Не може да бъде null или празно
+     */
+    @NotBlank(message = "Потребителското име е задължително")
+    @Size(min = 7, max = 50, message = "Потребителското име трябва да бъде между 7 и 50 символа")
     private String username;
 
     /**
-     * Парола за новия акаунт
-     * Ще се хеширва преди запазване в базата
+     * Парола за логин
+     * Изисквания:
+     * - Минимум 8 символа
+     * - Максимум 255 символа (за да има място за хеширането)
+     * - Не може да бъде null или празна
      */
-    @NotNull(message = "Паролата не може да бъде празна")
-    @Size(min = 4, max = 50, message = "Паролата трябва да е между 4 и 50 символа")
+    @NotBlank(message = "Паролата е задължителна")
+    @Size(min = 8, max = 255, message = "Паролата трябва да бъде между 8 и 255 символа")
     private String password;
 
     /**
      * Потвърждение на паролата
-     * Трябва да съвпада с password полето
+     * Трябва да съвпада точно с паролата
      */
-    @NotNull(message = "Потвърждението на паролата не може да бъде празно")
+    @NotBlank(message = "Потвърждението на паролата е задължително")
     private String confirmPassword;
 
     /**
      * ID на служителя за когото се създава акаунтът
-     * Избира се от dropdown с всички служители без акаунти
+     * Трябва да съществува в таблицата employees
      */
-    @NotNull(message = "Трябва да изберете служител")
+    @NotNull(message = "Служителят е задължителен")
+    @Positive(message = "ID на служителя трябва да бъде положително число")
     private Long employeeId;
 
     /**
-     * Роля на новия потребител
-     * По подразбиране ще бъде "user", но админът може да избере "admin"
+     * Роля на потребителя в системата
+     * Възможни стойности: "admin", "user"
      */
-    private String role = "user";
+    @NotBlank(message = "Ролята е задължителна")
+    @jakarta.validation.constraints.Pattern(
+            regexp = "^(admin|user)$",
+            message = "Ролята трябва да бъде 'admin' или 'user'"
+    )
+    private String role;
+
 
     // ===============================
     // КОНСТРУКТОРИ
     // ===============================
 
     /**
-     * Празен конструктор
+     * Празен конструктор (задължителен за JSON deserialization)
      */
     public UserRegistrationDto() {
         // Празен конструктор
     }
 
     /**
-     * Конструктор с основните полета
-     * @param username потребителско име
-     * @param password парола
-     * @param confirmPassword потвърждение на парола
+     * Конструктор с всички полета
+     *
+     * @param username потребителското име
+     * @param password паролата
+     * @param confirmPassword потвърждението на паролата
      * @param employeeId ID на служителя
+     * @param role ролята на потребителя
      */
-    public UserRegistrationDto(String username, String password, String confirmPassword, Long employeeId) {
+    public UserRegistrationDto(String username, String password, String confirmPassword,
+                               Long employeeId, String role) {
         this.username = username;
         this.password = password;
         this.confirmPassword = confirmPassword;
         this.employeeId = employeeId;
-        this.role = "user"; // По подразбиране
-    }
-
-    /**
-     * Пълен конструктор
-     * @param username потребителско име
-     * @param password парола
-     * @param confirmPassword потвърждение на парола
-     * @param employeeId ID на служителя
-     * @param role роля на потребителя
-     */
-    public UserRegistrationDto(String username, String password, String confirmPassword, Long employeeId, String role) {
-        this.username = username;
-        this.password = password;
-        this.confirmPassword = confirmPassword;
-        this.employeeId = employeeId;
-        this.role = role != null ? role : "user";
+        this.role = role;
     }
 
     // ===============================
-    // GETTER И SETTER МЕТОДИ
+    // GETTERS AND SETTERS
     // ===============================
 
     public String getUsername() {
@@ -104,7 +129,7 @@ public class UserRegistrationDto {
     }
 
     public void setUsername(String username) {
-        this.username = username;
+        this.username = username != null ? username.trim() : null;
     }
 
     public String getPassword() {
@@ -136,11 +161,11 @@ public class UserRegistrationDto {
     }
 
     public void setRole(String role) {
-        this.role = role != null ? role : "user";
+        this.role = role;
     }
 
     // ===============================
-    // ВАЛИДАЦИОННИ МЕТОДИ
+    // БИЗНЕС ЛОГИКА И ВАЛИДАЦИЯ
     // ===============================
 
     /**
@@ -155,6 +180,39 @@ public class UserRegistrationDto {
     }
 
     /**
+     * Проверява дали потребителското име отговаря на изискванията
+     * - Поне 7 символа
+     * - Поне една главна буква
+     * - Поне един специален знак
+     *
+     * @return true ако username е валиден
+     */
+    public boolean isUsernameValid() {
+        if (username == null || username.trim().isEmpty()) {
+            return false;
+        }
+
+        String trimmedUsername = username.trim();
+
+        // Проверка за дължина
+        if (trimmedUsername.length() < 7 || trimmedUsername.length() > 50) {
+            return false;
+        }
+
+        // Проверка за поне една главна буква
+        if (!Pattern.compile(UPPERCASE_PATTERN).matcher(trimmedUsername).find()) {
+            return false;
+        }
+
+        // Проверка за поне един специален знак
+        if (!Pattern.compile(SPECIAL_CHARS_PATTERN).matcher(trimmedUsername).find()) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
      * Проверява дали ролята е валидна
      * @return true ако ролята е admin или user
      */
@@ -163,18 +221,49 @@ public class UserRegistrationDto {
     }
 
     /**
-     * Проверява дали всички задължителни полета са попълнени
+     * Проверява дали всички задължителни полета са попълнени и валидни
      * @return true ако всички полета са валидни
      */
     public boolean isValid() {
-        return username != null && !username.trim().isEmpty() &&
-                username.length() >= 3 && username.length() <= 50 &&
-                password != null && !password.isEmpty() &&
-                password.length() >= 4 && password.length() <= 50 &&
-                confirmPassword != null && !confirmPassword.isEmpty() &&
+        return isUsernameValid() &&
+                password != null && password.length() >= 8 && password.length() <= 255 &&
                 isPasswordMatching() &&
-                employeeId != null &&
+                employeeId != null && employeeId > 0 &&
                 isValidRole();
+    }
+
+    /**
+     * Връща подробно съобщение за грешки във валидацията
+     * @return String с описание на грешките или null ако няма грешки
+     */
+    public String getValidationErrors() {
+        StringBuilder errors = new StringBuilder();
+
+        if (!isUsernameValid()) {
+            errors.append("Потребителското име трябва да съдържа поне 7 символа, поне една главна буква и поне един специален знак. ");
+        }
+
+        if (password == null || password.length() < 8) {
+            errors.append("Паролата трябва да съдържа поне 8 символа. ");
+        }
+
+        if (password != null && password.length() > 255) {
+            errors.append("Паролата е прекалено дълга. ");
+        }
+
+        if (!isPasswordMatching()) {
+            errors.append("Паролите не съвпадат. ");
+        }
+
+        if (employeeId == null || employeeId <= 0) {
+            errors.append("Трябва да изберете валиден служител. ");
+        }
+
+        if (!isValidRole()) {
+            errors.append("Трябва да изберете валидна роля (admin или user). ");
+        }
+
+        return errors.length() > 0 ? errors.toString().trim() : null;
     }
 
     // ===============================
@@ -184,9 +273,12 @@ public class UserRegistrationDto {
     /**
      * Почиства whitespace от потребителското име
      */
-    public void trimUsername() {
+    public void trimFields() {
         if (username != null) {
             username = username.trim();
+        }
+        if (role != null) {
+            role = role.trim().toLowerCase();
         }
     }
 
@@ -212,6 +304,19 @@ public class UserRegistrationDto {
         this.role = "user";
     }
 
+    /**
+     * Създава копие на DTO-то за логване (без пароли)
+     * Използва се за безопасно логване на данните
+     */
+    public UserRegistrationDto createSafeLogCopy() {
+        UserRegistrationDto safeCopy = new UserRegistrationDto();
+        safeCopy.username = this.username;
+        safeCopy.employeeId = this.employeeId;
+        safeCopy.role = this.role;
+        // Паролите не се копират за сигурност
+        return safeCopy;
+    }
+
     // ===============================
     // TOSTRING (БЕЗ ПАРОЛИ ЗА СИГУРНОСТ)
     // ===============================
@@ -223,6 +328,32 @@ public class UserRegistrationDto {
                 ", employeeId=" + employeeId +
                 ", role='" + role + '\'' +
                 ", passwordsMatch=" + isPasswordMatching() +
+                ", usernameValid=" + isUsernameValid() +
+                ", isValid=" + isValid() +
                 '}';
+    }
+
+    // ===============================
+    // EQUALS AND HASHCODE
+    // ===============================
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        UserRegistrationDto that = (UserRegistrationDto) o;
+
+        if (username != null ? !username.equals(that.username) : that.username != null) return false;
+        if (employeeId != null ? !employeeId.equals(that.employeeId) : that.employeeId != null) return false;
+        return role != null ? role.equals(that.role) : that.role == null;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = username != null ? username.hashCode() : 0;
+        result = 31 * result + (employeeId != null ? employeeId.hashCode() : 0);
+        result = 31 * result + (role != null ? role.hashCode() : 0);
+        return result;
     }
 }

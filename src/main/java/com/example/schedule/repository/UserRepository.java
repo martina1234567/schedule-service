@@ -3,6 +3,7 @@ package com.example.schedule.repository;
 import com.example.schedule.entity.User;
 import com.example.schedule.entity.Employee;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -13,154 +14,314 @@ import java.util.Optional;
 
 /**
  * REPOSITORY ИНТЕРФЕЙС ЗА USER ENTITY
- * Предоставя методи за работа с потребители в базата данни
- * Наследява JpaRepository за основни CRUD операции
+ *
+ * Този интерфейс дефинира всички операции за достъп до данни
+ * свързани с потребителите в системата.
+ *
+ * Spring Data JPA автоматично имплементира този интерфейс
+ * и предоставя основните CRUD операции плюс custom заявки.
+ *
+ * СЪВМЕСТИМОСТ: Всички методи са съвместими с Employee entity структурата:
+ * - Employee.name (вместо firstName)
+ * - Employee.lastname (вместо lastName)
+ * - Няма Employee.department поле
  *
  * @author Schedule Management System
- * @version 1.0
+ * @version 2.0
  */
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
 
     // ===============================
-    // ОСНОВНИ ТЪРСЕНИЯ ПО ПОТРЕБИТЕЛСКО ИМЕ
+    // ОСНОВНИ QUERY МЕТОДИ
     // ===============================
 
     /**
      * Намира потребител по потребителско име
-     * Използва се за логин операции
+     * Използва се при логин и регистрация за проверка на уникалност
+     *
      * @param username потребителското име
-     * @return Optional<User> - потребител или празен резултат
+     * @return Optional<User> - потребителя ако съществува
      */
     Optional<User> findByUsername(String username);
 
     /**
      * Проверява дали съществува потребител с даденото име
-     * @param username потребителското име за проверка
-     * @return true ако потребителят съществува, false ако не
+     * Полезно за бърза проверка без зареждане на целия обект
+     *
+     * @param username потребителското име
+     * @return true ако съществува
      */
     boolean existsByUsername(String username);
 
     /**
-     * Намира потребител по потребителско име (case-insensitive)
-     * @param username потребителското име
-     * @return Optional<User> - потребител или празен резултат
-     */
-    @Query("SELECT u FROM User u WHERE LOWER(u.username) = LOWER(?1)")
-    Optional<User> findByUsernameIgnoreCase(String username);
-
-    // ===============================
-    // ТЪРСЕНИЯ ПО СЛУЖИТЕЛ
-    // ===============================
-
-    /**
-     * Намира потребител по служител
+     * Намира потребител по Employee entity
      * Един служител може да има само един потребителски акаунт
+     *
      * @param employee служителя
-     * @return Optional<User> - потребител или празен резултат
+     * @return Optional<User> - потребителя ако съществува
      */
     Optional<User> findByEmployee(Employee employee);
 
     /**
-     * Намира потребител по ID на служител
+     * Намира потребител по employee ID
+     * Алтернативен начин за търсене по служител
+     *
      * @param employeeId ID на служителя
-     * @return Optional<User> - потребител или празен резултат
+     * @return Optional<User> - потребителя ако съществува
      */
-    Optional<User> findByEmployeeId(Long employeeId);
+    @Query("SELECT u FROM User u WHERE u.employee.id = :employeeId")
+    Optional<User> findByEmployeeId(@Param("employeeId") Long employeeId);
 
     /**
-     * Проверява дали даден служител вече има потребителски акаунт
-     * @param employee служителя за проверка
-     * @return true ако служителят има акаунт, false ако няма
+     * Проверява дали съществува потребител за даден служител
+     *
+     * @param employee служителя
+     * @return true ако съществува
      */
     boolean existsByEmployee(Employee employee);
 
-    /**
-     * Проверява дали служител с дадено ID има потребителски акаунт
-     * @param employeeId ID на служителя
-     * @return true ако служителят има акаунт, false ако няма
-     */
-    boolean existsByEmployeeId(Long employeeId);
-
     // ===============================
-    // ТЪРСЕНИЯ ПО АКТИВНОСТ И РОЛИ
+    // ФИЛТРИРАНЕ ПО СТАТУС
     // ===============================
 
     /**
-     * Намира всички активни потребители
-     * @return List<User> - списък с активни потребители
+     * Връща всички активни потребители
+     *
+     * @return списък с активни потребители
      */
     List<User> findByIsActiveTrue();
 
     /**
-     * Намира потребител по потребителско име, само ако е активен
-     * Използва се за логин - деактивирани потребители не могат да влизат
+     * Връща всички неактивни потребители
+     *
+     * @return списък с неактивни потребители
+     */
+    List<User> findByIsActiveFalse();
+
+    /**
+     * Връща потребители по активен статус
+     *
+     * @param isActive активен статус
+     * @return списък с потребители
+     */
+    List<User> findByIsActive(Boolean isActive);
+
+    // ===============================
+    // ФИЛТРИРАНЕ ПО ДАТА
+    // ===============================
+
+    /**
+     * Намира потребители създадени след определена дата
+     *
+     * @param date датата за сравнение
+     * @return списък с потребители
+     */
+    List<User> findByCreatedAtAfter(LocalDateTime date);
+
+    /**
+     * Намира потребители които са влизали след определена дата
+     *
+     * @param date датата за сравнение
+     * @return списък с потребители
+     */
+    List<User> findByLastLoginAfter(LocalDateTime date);
+
+    /**
+     * Намира потребители които НЕ са влизали от определена дата
+     *
+     * @param date датата за сравнение
+     * @return списък с потребители
+     */
+    List<User> findByLastLoginBeforeOrLastLoginIsNull(LocalDateTime date);
+
+    // ===============================
+    // СЛОЖНИ ЗАЯВКИ С @Query
+    // ===============================
+
+    /**
+     * Намира всички потребители с техните Employee данни
+     * Използва JOIN за оптимизация на заявките
+     */
+    @Query("SELECT u FROM User u JOIN FETCH u.employee e")
+    List<User> findAllUsersWithEmployeeData();
+
+    /**
+     * Намира всички потребители с техните роли
+     * Използва JOIN FETCH за eager loading на ролите
+     */
+    @Query("SELECT DISTINCT u FROM User u LEFT JOIN FETCH u.roles")
+    List<User> findAllUsersWithRoles();
+
+    /**
+     * Намира потребители по име на роля
+     *
+     * @param roleName името на ролята
+     * @return списък с потребители имащи тази роля
+     */
+    @Query("SELECT u FROM User u JOIN u.roles r WHERE r.name = :roleName")
+    List<User> findByRoleName(@Param("roleName") String roleName);
+
+    /**
+     * Намира всички администратори в системата
+     *
+     * @return списък с admin потребители
+     */
+    @Query("SELECT u FROM User u JOIN u.roles r WHERE r.name = 'ADMIN'")
+    List<User> findAllAdmins();
+
+    /**
+     * Намира всички обикновени потребители
+     *
+     * @return списък с user потребители
+     */
+    @Query("SELECT u FROM User u JOIN u.roles r WHERE r.name = 'USER'")
+    List<User> findAllUsers();
+
+    /**
+     * Преброява потребителите по роля
+     *
+     * @param roleName името на ролята
+     * @return броя потребители с тази роля
+     */
+    @Query("SELECT COUNT(u) FROM User u JOIN u.roles r WHERE r.name = :roleName")
+    long countByRoleName(@Param("roleName") String roleName);
+
+    // ===============================
+    // СТАТИСТИЧЕСКИ ЗАЯВКИ
+    // ===============================
+
+    /**
+     * Преброява всички активни потребители
+     *
+     * @return броя активни потребители
+     */
+    long countByIsActiveTrue();
+
+    /**
+     * Преброява всички неактивни потребители
+     *
+     * @return броя неактивни потребители
+     */
+    long countByIsActiveFalse();
+
+    /**
+     * Намира потребители които никога не са влизали
+     *
+     * @return списък с потребители без логин
+     */
+    List<User> findByLastLoginIsNull();
+
+    /**
+     * Преброява потребителите които никога не са влизали
+     *
+     * @return броя потребители без логин
+     */
+    long countByLastLoginIsNull();
+
+    // ===============================
+    // SEARCH И FILTERING
+    // ===============================
+
+    /**
+     * Търси потребители по част от потребителското име
+     * Case-insensitive търсене
+     *
+     * @param username част от потребителското име
+     * @return списък с намерени потребители
+     */
+    @Query("SELECT u FROM User u WHERE LOWER(u.username) LIKE LOWER(CONCAT('%', :username, '%'))")
+    List<User> findByUsernameContainingIgnoreCase(@Param("username") String username);
+
+    /**
+     * Търси потребители по име на служителя
+     * СЪВМЕСТИМОСТ: Използва Employee.name и Employee.lastname полета
+     *
+     * @param name първо име (Employee.name)
+     * @param lastname фамилия (Employee.lastname)
+     * @return списък с намерени потребители
+     */
+    @Query("SELECT u FROM User u JOIN u.employee e WHERE " +
+            "LOWER(e.name) LIKE LOWER(CONCAT('%', :name, '%')) AND " +
+            "LOWER(e.lastname) LIKE LOWER(CONCAT('%', :lastname, '%'))")
+    List<User> findByEmployeeNameContaining(@Param("name") String name,
+                                            @Param("lastname") String lastname);
+
+    // ===============================
+    // ОПЕРАЦИИ ЗА МАСОВА АКТУАЛИЗАЦИЯ
+    // ===============================
+
+    /**
+     * Актуализира последния логин за потребител
+     *
+     * @param userId ID на потребителя
+     * @param loginTime времето на логин
+     * @return броя актуализирани записи
+     */
+    @Modifying
+    @Query("UPDATE User u SET u.lastLogin = :loginTime, u.updatedAt = :loginTime WHERE u.id = :userId")
+    int updateLastLogin(@Param("userId") Long userId, @Param("loginTime") LocalDateTime loginTime);
+
+    // ===============================
+    // ПРОВЕРКИ ЗА ВАЛИДАЦИЯ
+    // ===============================
+
+    /**
+     * Проверява дали потребителското име се използва от друг потребител
+     * Полезно при редактиране на акаунт
+     *
      * @param username потребителското име
-     * @return Optional<User> - активен потребител или празен резултат
+     * @param userId ID на текущия потребител
+     * @return true ако име се използва от друг
      */
-    @Query("SELECT u FROM User u WHERE u.username = ?1 AND u.isActive = true")
-    Optional<User> findActiveUserByUsername(String username);
-
-    /**
-     * Намира всички потребители с определена роля
-     * @param roleName името на ролята (admin, user)
-     * @return List<User> - списък с потребители с тази роля
-     */
-    @Query("SELECT u FROM User u JOIN u.roles r WHERE r.name = ?1")
-    List<User> findByRoleName(String roleName);
-
-    /**
-     * Намира всички активни администратори
-     * @return List<User> - списък с активни админи
-     */
-    @Query("SELECT u FROM User u JOIN u.roles r WHERE r.name = 'admin' AND u.isActive = true")
-    List<User> findActiveAdmins();
+    @Query("SELECT CASE WHEN COUNT(u) > 0 THEN true ELSE false END FROM User u " +
+            "WHERE u.username = :username AND u.id != :userId")
+    boolean existsByUsernameAndIdNot(@Param("username") String username, @Param("userId") Long userId);
 
     // ===============================
-    // СТАТИСТИКИ И ОТЧЕТИ
+    // CUSTOM МЕТОДИ ЗА СЛОЖНИ ОПЕРАЦИИ
     // ===============================
 
     /**
-     * Брои всички активни потребители
-     * @return int - броя активни потребители
+     * Намира всички потребители с пълна информация за показване в админ панел
+     * Включва Employee и Role данни
      */
-    int countByIsActiveTrue();
+    @Query("SELECT DISTINCT u FROM User u " +
+            "LEFT JOIN FETCH u.employee e " +
+            "LEFT JOIN FETCH u.roles r " +
+            "ORDER BY u.createdAt DESC")
+    List<User> findAllUsersWithFullInfo();
 
     /**
-     * Брои потребителите създадени в даден период
-     * @param startDate начална дата
-     * @param endDate крайна дата
-     * @return int - броя потребители създадени в периода
+     * Намира последно създадените потребители
+     *
+     * @param limit максимален брой резултати
+     * @return списък с последните потребители
      */
-    @Query("SELECT COUNT(u) FROM User u WHERE u.createdAt BETWEEN ?1 AND ?2")
-    int countUsersCreatedBetween(LocalDateTime startDate, LocalDateTime endDate);
+    @Query(value = "SELECT * FROM users u ORDER BY u.created_at DESC LIMIT :limit", nativeQuery = true)
+    List<User> findLatestUsers(@Param("limit") int limit);
 
     /**
-     * Намира потребителите които са влизали наскоро
-     * @param sinceDate дата от която да търси
-     * @return List<User> - потребители влизали след тази дата
+     * Намира потребители които не са влизали в системата
+     * в последните X дни
+     *
+     * @param cutoffDate дата преди която се считат за неактивни
+     * @return списък с неактивни потребители
      */
-    @Query("SELECT u FROM User u WHERE u.lastLogin > ?1 ORDER BY u.lastLogin DESC")
-    List<User> findUsersLoggedInSince(LocalDateTime sinceDate);
+    @Query("SELECT u FROM User u WHERE u.lastLogin IS NULL OR u.lastLogin < :cutoffDate")
+    List<User> findInactiveUsers(@Param("cutoffDate") LocalDateTime cutoffDate);
 
     // ===============================
-    // СПЕЦИАЛНИ ЗАЯВКИ ЗА ВАЛИДАЦИЯ
+    // СПЕЦИАЛНИ МЕТОДИ ЗА AUTH SERVICE
     // ===============================
 
     /**
-     * Проверява дали потребителско име е заето от друг потребител (при актуализиране)
-     * @param username потребителското име за проверка
-     * @param excludeId ID на потребителя, който да изключим от проверката
-     * @return true ако името е заето от друг потребител
+     * Намира активен потребител по username
+     * Комбинира проверка за съществуване и активен статус
+     *
+     * @param username потребителското име
+     * @return Optional<User> - активен потребител ако съществува
      */
-    @Query("SELECT COUNT(u) > 0 FROM User u WHERE u.username = :username AND u.id != :excludeId")
-    boolean existsByUsernameAndIdNot(@Param("username") String username, @Param("excludeId") Long excludeId);
-
-    /**
-     * Намира служители които все още нямат потребителски акаунти
-     * Полезно за dropdown в registration формата
-     * @return List<Employee> - служители без потребителски акаунти
-     */
-    @Query("SELECT e FROM Employee e WHERE e.id NOT IN (SELECT u.employee.id FROM User u WHERE u.employee IS NOT NULL)")
-    List<Employee> findEmployeesWithoutUserAccounts();
+    @Query("SELECT u FROM User u WHERE u.username = :username AND u.isActive = true")
+    Optional<User> findActiveUserByUsername(@Param("username") String username);
 }

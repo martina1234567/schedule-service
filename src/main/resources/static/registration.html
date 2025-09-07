@@ -3,39 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Schedule Management System</title>
+    <title>Registration - Schedule Management System</title>
     <link rel="stylesheet" href="loginStyle.css">
 </head>
 <body>
-<!-- ОСНОВЕН КОНТЕЙНЕР ЗА ЛОГИН -->
+<!-- ОСНОВЕН КОНТЕЙНЕР ЗА РЕГИСТРАЦИЯ -->
 <div class="login-container">
     <!-- HEADER С ЛОГО И ЗАГЛАВИЕ -->
     <div class="login-header">
-
         <div class="login-logo"><img src="images/shopping.png" alt="App Logo"></div>
         <h1>Registration</h1>
         <p>Schedule Management System</p>
     </div>
 
-    <!-- ERROR СЪОБЩЕНИЯ -->
-    <div id="error-message" class="error-message" role="alert">
+    <!-- ERROR/SUCCESS СЪОБЩЕНИЯ -->
+    <div id="error-message" class="error-message" role="alert" style="display: none;">
         <span id="error-text"></span>
     </div>
 
-    <div class="form-group select-group">
-        <!-- СТАТИЧЕН LABEL - винаги в горния ляв ъгъл -->
-        <label for="employeeSelect" class="form-label">Employee</label>
-
-        <!-- SELECT ЕЛЕМЕНТ -->
-        <select id="employeeSelect" class="form-select" required>
-            <option value="" disabled selected>Избери служител</option>
-        </select>
+    <div id="success-message" class="success-message" role="alert" style="display: none;">
+        <span id="success-text"></span>
     </div>
 
+    <!-- ИЗБОР НА СЛУЖИТЕЛ -->
+    <div class="form-group select-group">
+        <label for="employeeSelect" class="form-label">Employee</label>
+        <select id="employeeSelect" class="form-select" required>
+            <option value="" disabled selected>Избери служител</option>
+            <!-- Служителите се зареждат динамично чрез JavaScript -->
+        </select>
+        <div class="field-error" id="employeeSelect-error" style="display: none;"></div>
+    </div>
 
-    <!-- ЛОГИН ФОРМА -->
-    <form class="login-form" id="loginForm" novalidate>
-        <!-- ПОЛЕ ЗА ПОТРЕБИТЕЛСКО ИМЕ/EMAIL -->
+    <!-- РЕГИСТРАЦИОННА ФОРМА -->
+    <form class="login-form" id="registrationForm" novalidate>
+
+        <!-- ПОЛЕ ЗА ПОТРЕБИТЕЛСКО ИМЕ -->
         <div class="form-group">
             <input
                     type="text"
@@ -44,8 +47,14 @@
                     placeholder=" "
                     autocomplete="username"
                     required
+                    minlength="7"
+                    maxlength="50"
             >
             <label for="username" class="form-label">Username</label>
+            <div class="field-error" id="username-error" style="display: none;"></div>
+            <div class="field-help">
+                Потребителското име трябва да съдържа поне 7 символа, поне една главна буква и поне един специален знак
+            </div>
         </div>
 
         <!-- ПОЛЕ ЗА ПАРОЛА -->
@@ -55,45 +64,62 @@
                     id="password"
                     class="form-input"
                     placeholder=" "
-                    autocomplete="current-password"
+                    autocomplete="new-password"
                     required
+                    minlength="8"
+                    maxlength="50"
             >
             <label for="password" class="form-label">Password</label>
             <button type="button" class="password-toggle" id="passwordToggle" title="Покажи/скрий парола">
                 👁️
             </button>
+            <div class="field-error" id="password-error" style="display: none;"></div>
+        </div>
+
+        <!-- ПОЛЕ ЗА ПОТВЪРЖДЕНИЕ НА ПАРОЛА -->
+        <div class="form-group">
+            <input
+                    type="password"
+                    id="confirmPassword"
+                    class="form-input"
+                    placeholder=" "
+                    autocomplete="new-password"
+                    required
+                    minlength="8"
+                    maxlength="50"
+            >
+            <label for="confirmPassword" class="form-label">Confirm Password</label>
+            <button type="button" class="password-toggle" id="confirmPasswordToggle" title="Покажи/скрий парола">
+                👁️
+            </button>
+            <div class="field-error" id="confirmPassword-error" style="display: none;"></div>
         </div>
 
         <!-- ИЗБОР НА РОЛЯ -->
-        <div class="role-selector">
-            <div class="role-option">
-                <input type="radio" id="roleUser" name="role" value="user" class="role-radio" checked>
-                <label for="roleUser" class="role-label">👤 Потребител</label>
-            </div>
-            <div class="role-option">
-                <input type="radio" id="roleAdmin" name="role" value="admin" class="role-radio">
-                <label for="roleAdmin" class="role-label">👑 Администратор</label>
-            </div>
+        <div class="form-group select-group">
+            <label for="roleSelect" class="form-label">Role</label>
+            <select id="roleSelect" class="form-select" required>
+                <option value="" disabled selected>Избери роля</option>
+                <option value="user">User</option>
+                <option value="admin">Administrator</option>
+            </select>
+            <div class="field-error" id="roleSelect-error" style="display: none;"></div>
         </div>
 
-        <!-- CHECKBOX ЗА "ЗАПОМНИ МЕ" -->
-        <div class="remember-me">
-            <input type="checkbox" id="rememberMe" name="rememberMe">
-            <label for="rememberMe">Remember me</label>
-        </div>
+        <!-- БУТОНИ -->
+        <div class="form-actions">
+            <button type="submit" class="submit-btn" id="registerBtn">
+                <span class="btn-text">Създай акаунт</span>
+                <span class="btn-loading" style="display: none;">Създаване...</span>
+            </button>
 
-        <!-- БУТОН ЗА ВЛИЗАНЕ -->
-        <button type="submit" class="login-btn" id="loginBtn">
-            Add account
-        </button>
+            <a href="login.html" class="link-btn">Вече имам акаунт</a>
+        </div>
     </form>
-
-    <!-- FOOTER -->
-    <div class="login-footer">
-        <p>&copy; 2025 <span class="twingo-brand">Twingo</span>. All rights reserved.</p>
-    </div>
 </div>
 
+<!-- JAVASCRIPT ЗА РЕГИСТРАЦИЯТА -->
 <script src="registrationManager.js" defer></script>
+
 </body>
 </html>

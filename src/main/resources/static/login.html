@@ -11,15 +11,19 @@
 <div class="login-container">
     <!-- HEADER С ЛОГО И ЗАГЛАВИЕ -->
     <div class="login-header">
-
         <div class="login-logo"><img src="images/shopping.png" alt="App Logo"></div>
         <h1>Login</h1>
         <p>Schedule Management System</p>
     </div>
 
     <!-- ERROR СЪОБЩЕНИЯ -->
-    <div id="error-message" class="error-message" role="alert">
+    <div id="error-message" class="error-message" role="alert" style="display: none;">
         <span id="error-text"></span>
+    </div>
+
+    <!-- SUCCESS СЪОБЩЕНИЯ -->
+    <div id="success-message" class="success-message" role="alert" style="display: none;">
+        <span id="success-text"></span>
     </div>
 
     <!-- ЛОГИН ФОРМА -->
@@ -59,15 +63,19 @@
             <label for="rememberMe">Remember me</label>
         </div>
 
-        <!-- БУТОН ЗА ВЛИЗАНЕ -->
+        <!-- БУТОН ЗА ВЛИЗАНЕ - ПОПРАВЕНА СТРУКТУРА -->
         <button type="submit" class="login-btn" id="loginBtn">
-            Login
+            <span class="btn-text">Login</span>
+            <span class="btn-loading" style="display: none;">
+                <span class="loading-spinner"></span>
+                Loading...
+            </span>
         </button>
     </form>
 
     <!-- FOOTER -->
     <div class="login-footer">
-            <p>&copy; 2025 <span class="twingo-brand">Twingo</span>. All rights reserved.</p>
+        <p>&copy; 2025 <span class="twingo-brand">Twingo</span>. All rights reserved.</p>
     </div>
 </div>
 

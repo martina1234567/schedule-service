@@ -4,13 +4,13 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 
 /**
- * ПОПРАВЕН WEB CONTROLLER ЗА HTML СТРАНИЦИ
+ * WEB CONTROLLER ЗА HTML СТРАНИЦИ
  *
  * Този контролер обработва заявки към статичните HTML файлове
  * и осигурява правилно пренасочване без конфликти със Spring Security
  *
  * @author Schedule Management System
- * @version 2.0
+ * @version 2.1
  */
 @Controller
 public class WebController {
@@ -28,7 +28,6 @@ public class WebController {
     /**
      * АЛТЕРНАТИВЕН ДОСТЪП ДО LOGIN СТРАНИЦАТА
      * Този endpoint пренасочва към статичния HTML файл
-     * ВАЖНО: Не използваме "/login" защото Spring Security може да го прехване
      */
     @GetMapping("/auth")
     public String auth() {
@@ -46,8 +45,8 @@ public class WebController {
     }
 
     /**
-     * ДОСТЪП ДО ГЛАВНОТО ПРИЛОЖЕНИЕ
-     * Този endpoint води към календарната система
+     * ДОСТЪП ДО ГЛАВНОТО ПРИЛОЖЕНИЕ (ADMIN/MANAGER)
+     * Този endpoint води към пълния календарен dashboard
      */
     @GetMapping("/app")
     public String app() {
@@ -71,5 +70,24 @@ public class WebController {
     public String dashboard() {
         System.out.println("📊 Dashboard path accessed, redirecting to index");
         return "redirect:/index.html";
+    }
+
+    /**
+     * ДОСТЪП ДО USER DASHBOARD
+     * Опростена страница за потребители с USER роля
+     */
+    @GetMapping("/user-dashboard")
+    public String userDashboard() {
+        System.out.println("👤 User dashboard path accessed, redirecting to user-dashboard");
+        return "redirect:/user-dashboard.html";
+    }
+
+    /**
+     * ДОСТЪП ДО MY SCHEDULE (АЛТЕРНАТИВЕН ЗА USER)
+     */
+    @GetMapping("/my-schedule")
+    public String mySchedule() {
+        System.out.println("📋 My schedule path accessed, redirecting to user-dashboard");
+        return "redirect:/user-dashboard.html";
     }
 }

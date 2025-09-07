@@ -1,304 +1,286 @@
-// ===============================
-// JAVASCRIPT ФУНКЦИОНАЛНОСТ - ПОПРАВЕНА ВЕРСИЯ
-// ===============================
+/**
+ * LOGIN FORM WITH ROLE-BASED REDIRECT
+ * Логин форма с автоматично пренасочване според ролята
+ */
 
+// Global variables
+let isFormSubmitting = false;
+
+/**
+ * Инициализация при зареждане на страницата
+ */
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🔐 Login page loaded');
-    initializeLoginPage();
+
+    // Проверка за съществуващ login
+    checkExistingLogin();
+
+    // Setup на event listeners
+    setupEventListeners();
 });
 
 /**
- * ГЛАВНА ФУНКЦИЯ ЗА ИНИЦИАЛИЗАЦИЯ НА ЛОГИН СТРАНИЦАТА
+ * Setup event listeners
  */
-function initializeLoginPage() {
-    // Елементи от DOM
+function setupEventListeners() {
     const loginForm = document.getElementById('loginForm');
-    const loginBtn = document.getElementById('loginBtn');
+    if (loginForm) {
+        loginForm.addEventListener('submit', handleLogin);
+    }
+
+    // Password toggle functionality
     const passwordToggle = document.getElementById('passwordToggle');
-    const passwordInput = document.getElementById('password');
-    const usernameInput = document.getElementById('username');
-    const errorMessage = document.getElementById('error-message');
-    const errorText = document.getElementById('error-text');
+    const passwordField = document.getElementById('password');
 
-    // Event listeners
-    setupEventListeners(loginForm, loginBtn, passwordToggle, passwordInput, usernameInput, errorMessage, errorText);
-
-    // Инициализиране на валидация
-    setupValidation(usernameInput, passwordInput);
-
-    console.log('✅ Login page initialized');
-}
-
-/**
- * НАСТРОЙКА НА EVENT LISTENERS
- */
-function setupEventListeners(loginForm, loginBtn, passwordToggle, passwordInput, usernameInput, errorMessage, errorText) {
-    // Форма submit
-    loginForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-        handleLogin(usernameInput.value, passwordInput.value, errorMessage, errorText, loginBtn);
-    });
-
-    // Показване/скриване на парола
-    passwordToggle.addEventListener('click', function() {
-        togglePasswordVisibility(passwordInput, passwordToggle);
-    });
-
-    // Скриване на error при typing
-    usernameInput.addEventListener('input', () => hideError(errorMessage));
-    passwordInput.addEventListener('input', () => hideError(errorMessage));
-
-    // Enter key в полетата
-    [usernameInput, passwordInput].forEach(input => {
-        input.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                loginForm.dispatchEvent(new Event('submit'));
-            }
+    if (passwordToggle && passwordField) {
+        passwordToggle.addEventListener('click', () => {
+            const isPassword = passwordField.type === 'password';
+            passwordField.type = isPassword ? 'text' : 'password';
+            passwordToggle.textContent = isPassword ? '🙈' : '👁️';
         });
-    });
+    }
 }
 
 /**
- * SETUP ВАЛИДАЦИЯ НА ПОЛЕТАТА
+ * Обработва login заявката с role-based редирект
  */
-function setupValidation(usernameInput, passwordInput) {
-    // Real-time валидация за username
-    usernameInput.addEventListener('blur', function() {
-        validateField(usernameInput, usernameInput.value.length >= 3);
-    });
+async function handleLogin(event) {
+    event.preventDefault();
 
-    // Real-time валидация за password
-    passwordInput.addEventListener('blur', function() {
-        validateField(passwordInput, passwordInput.value.length >= 4);
-    });
-}
-
-/**
- * ФУНКЦИЯ ЗА ВАЛИДАЦИЯ НА ПОЛЕ
- */
-function validateField(input, isValid) {
-    input.classList.remove('valid', 'invalid');
-    input.classList.add(isValid ? 'valid' : 'invalid');
-    return isValid;
-}
-
-/**
- * ПОКАЗВАНЕ/СКРИВАНЕ НА ПАРОЛА
- */
-function togglePasswordVisibility(passwordInput, passwordToggle) {
-    const isPassword = passwordInput.type === 'password';
-    passwordInput.type = isPassword ? 'text' : 'password';
-    passwordToggle.textContent = isPassword ? '🙈' : '👁️';
-    passwordToggle.title = isPassword ? 'Скрий парола' : 'Покажи парола';
-}
-
-/**
- * ГЛАВНА ФУНКЦИЯ ЗА ОБРАБОТКА НА ЛОГИН
- * ПОПРАВЕНА ВЕРСИЯ С РЕАЛНА REST ЗАЯВКА
- */
-async function handleLogin(username, password, errorMessage, errorText, loginBtn) {
-    console.log('🔐 Attempting real login for:', username);
-
-    // Скриваме предишни грешки
-    hideError(errorMessage);
-
-    // Валидация на входните данни
-    if (!validateLoginData(username, password, errorMessage, errorText)) {
+    if (isFormSubmitting) {
+        console.log('⏳ Form already submitting, ignoring...');
         return;
     }
 
-    // Показваме loading състояние
-    setLoginLoading(loginBtn, true);
+    console.log('🔐 Processing login...');
+
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value;
+
+    // Основна валидация
+    if (!username || !password) {
+        showError('Моля въведете потребителско име и парола');
+        return;
+    }
 
     try {
-        console.log('📡 Making real HTTP request to backend...');
-        
-        // РЕАЛНА REST ЗАЯВКА КЪМ SPRING BOOT BACKEND
+        isFormSubmitting = true;
+        setLoadingState(true);
+        hideMessages();
+
+        const loginData = {
+            username: username,
+            password: password
+        };
+
+        console.log('📤 Sending login request for:', username);
+
         const response = await fetch('/api/auth/login', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-                username: username.trim(),
-                password: password
-            })
+            body: JSON.stringify(loginData)
         });
 
-        console.log('📊 Response status:', response.status);
-        
         const data = await response.json();
-        console.log('📄 Response data:', data);
+        console.log('📥 Full login response:', JSON.stringify(data, null, 2));
+        console.log('🔍 Response redirectUrl:', data.redirectUrl);
+        console.log('🔍 User object:', data.user);
+        console.log('🔍 User roles from server:', data.user?.roles);
 
         if (response.ok && data.success) {
-            // Успешен логин
-            console.log('✅ Login successful');
-            handleLoginSuccess(data.user, data.token);
+            console.log('✅ Login successful:', data);
+
+            // Запазване на потребителски данни в sessionStorage
+            sessionStorage.setItem('currentUser', JSON.stringify(data.user));
+            sessionStorage.setItem('isLoggedIn', 'true');
+
+            // Показване на success съобщение
+            showSuccess('Успешен вход! Пренасочване...');
+
+            // Пренасочване според ролята
+            setTimeout(() => {
+                const redirectUrl = data.redirectUrl || determineRedirectUrl(data.user);
+                console.log('🔄 Redirecting to:', redirectUrl);
+                window.location.href = redirectUrl;
+            }, 1500);
+
         } else {
-            // Грешка при логин
-            const errorMsg = data.message || 'Неправилно потребителско име или парола';
-            console.log('❌ Login failed:', errorMsg);
-            showError(errorMessage, errorText, errorMsg);
+            console.error('❌ Login failed:', data);
+            const errorMessage = data.error || data.message || 'Невалидно потребителско име или парола';
+            showError(errorMessage);
         }
+
     } catch (error) {
-        console.error('❌ Network/Login error:', error);
-        showError(errorMessage, errorText, 'Възникна грешка при свързване със сървъра. Проверете дали Spring Boot приложението работи.');
+        console.error('❌ Login error:', error);
+        showError('Възникна грешка при свързване със сървъра');
     } finally {
-        // Премахваме loading състоянието
-        setLoginLoading(loginBtn, false);
+        isFormSubmitting = false;
+        setLoadingState(false);
     }
 }
 
 /**
- * ВАЛИДАЦИЯ НА ВХОДНИТЕ ДАННИ
+ * Определя redirect URL според ролята на потребителя (fallback)
  */
-function validateLoginData(username, password, errorMessage, errorText) {
-    if (!username.trim()) {
-        showError(errorMessage, errorText, 'Моля въведете потребителско име');
-        return false;
+function determineRedirectUrl(user) {
+    if (!user || !user.roles || user.roles.length === 0) {
+        console.log('👤 No roles found - redirecting to user dashboard');
+        return 'user-dashboard.html'; // По подразбиране USER
     }
 
-    if (username.length < 3) {
-        showError(errorMessage, errorText, 'Потребителското име трябва да е поне 3 символа');
-        return false;
-    }
+    console.log('🔍 User roles:', user.roles);
 
-    if (!password) {
-        showError(errorMessage, errorText, 'Моля въведете парола');
-        return false;
+    // Проверяваме ролите с приоритет: ADMIN > MANAGER > USER
+    if (user.roles.includes('ADMIN')) {
+        console.log('👑 Admin user detected - redirecting to full dashboard');
+        return 'index.html';
+    } else if (user.roles.includes('MANAGER')) {
+        console.log('👔 Manager user detected - redirecting to full dashboard');
+        return 'index.html';
+    } else {
+        console.log('👤 Regular user detected - redirecting to user dashboard');
+        return 'user-dashboard.html';
     }
-
-    if (password.length < 4) {
-        showError(errorMessage, errorText, 'Паролата трябва да е поне 4 символа');
-        return false;
-    }
-
-    return true;
 }
 
 /**
- * ОБРАБОТКА НА УСПЕШЕН ЛОГИН
+ * Проверява дали потребителят е вече логнат при зареждане на страницата
  */
-function handleLoginSuccess(user, token) {
-    localStorage.setItem('authToken', token);
-    localStorage.setItem('currentUser', JSON.stringify(user));
-    console.log('✅ Login successful, redirecting...');
-    window.location.href = '/index.html';
-}
-/**
- * ПОКАЗВАНЕ НА ГРЕШКА
- */
-function showError(errorMessage, errorText, message) {
-    errorText.textContent = message;
-    errorMessage.classList.add('show');
+function checkExistingLogin() {
+    const isLoggedIn = sessionStorage.getItem('isLoggedIn');
+    const currentUser = sessionStorage.getItem('currentUser');
 
-    // Автоматично скриване след 5 секунди
-    setTimeout(() => {
-        hideError(errorMessage);
-    }, 5000);
+    if (isLoggedIn === 'true' && currentUser) {
+        try {
+            const user = JSON.parse(currentUser);
+            console.log('🔍 Existing login detected for:', user.username);
+
+            // Пренасочване към подходящата страница
+            const redirectUrl = determineRedirectUrl(user);
+            console.log('🔄 Auto-redirecting to:', redirectUrl);
+            window.location.href = redirectUrl;
+
+        } catch (error) {
+            console.error('❌ Error parsing stored user data:', error);
+            // Изчистване на невалидни данни
+            sessionStorage.removeItem('currentUser');
+            sessionStorage.removeItem('isLoggedIn');
+        }
+    }
 }
 
 /**
- * ПОКАЗВАНЕ НА SUCCESS СЪОБЩЕНИЕ
+ * UI Helper Functions
  */
-function showSuccess(errorMessage, errorText, message) {
-    if (errorMessage && errorText) {
+function showError(message) {
+    const errorDiv = document.getElementById('error-message');
+    const errorText = document.getElementById('error-text');
+
+    if (errorDiv && errorText) {
         errorText.textContent = message;
-        errorMessage.classList.remove('show');
-        errorMessage.classList.add('success', 'show');
+        errorDiv.style.display = 'block';
 
-        // Премахваме success класа след време
-        setTimeout(() => {
-            errorMessage.classList.remove('success');
-        }, 2000);
+        // Hide success message if shown
+        const successDiv = document.getElementById('success-message');
+        if (successDiv) {
+            successDiv.style.display = 'none';
+        }
+
+        // Scroll to error
+        errorDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
     } else {
-        // Fallback - показваме в конзолата
-        console.log('✅ SUCCESS:', message);
+        // Fallback - ако няма error div, използваме alert
+        console.error('Error div not found, using alert:', message);
+        alert('Грешка: ' + message);
     }
 }
 
-/**
- * СКРИВАНЕ НА ГРЕШКА
- */
-function hideError(errorMessage) {
-    if (errorMessage) {
-        errorMessage.classList.remove('show', 'success');
+function showSuccess(message) {
+    const successDiv = document.getElementById('success-message');
+    const successText = document.getElementById('success-text');
+
+    if (successDiv && successText) {
+        successText.textContent = message;
+        successDiv.style.display = 'block';
+
+        // Hide error message if shown
+        const errorDiv = document.getElementById('error-message');
+        if (errorDiv) {
+            errorDiv.style.display = 'none';
+        }
+
+        // Scroll to success
+        successDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } else {
+        // Fallback - ако няма success div, използваме console.log
+        console.log('Success:', message);
     }
 }
 
+function hideMessages() {
+    const errorDiv = document.getElementById('error-message');
+    const successDiv = document.getElementById('success-message');
+
+    if (errorDiv) errorDiv.style.display = 'none';
+    if (successDiv) successDiv.style.display = 'none';
+}
+
 /**
- * УПРАВЛЕНИЕ НА LOADING СЪСТОЯНИЕТО НА БУТОНА
+ * ПОПРАВЕНА ФУНКЦИЯ: setLoadingState с проверки за null
  */
-function setLoginLoading(loginBtn, isLoading) {
+function setLoadingState(isLoading) {
+    const loginBtn = document.getElementById('loginBtn');
+
+    if (!loginBtn) {
+        console.warn('⚠️ Login button not found!');
+        return;
+    }
+
+    const btnText = loginBtn.querySelector('.btn-text');
+    const btnLoading = loginBtn.querySelector('.btn-loading');
+
+    // Проверяваме дали елементите съществуват преди да ги използваме
+    if (!btnText || !btnLoading) {
+        console.warn('⚠️ Button text or loading elements not found!');
+        // Fallback - променяме само текста и disabled състоянието
+        if (isLoading) {
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'Loading...';
+        } else {
+            loginBtn.disabled = false;
+            loginBtn.textContent = 'Login';
+        }
+        return;
+    }
+
+    // Нормално поведение когато елементите съществуват
     if (isLoading) {
-        loginBtn.classList.add('loading');
         loginBtn.disabled = true;
-        loginBtn.textContent = 'Влизане...';
+        btnText.style.display = 'none';
+        btnLoading.style.display = 'inline-flex';
     } else {
-        loginBtn.classList.remove('loading');
         loginBtn.disabled = false;
-        loginBtn.textContent = 'Log in';
+        btnText.style.display = 'inline-flex';
+        btnLoading.style.display = 'none';
     }
 }
 
-// ===============================
-// DEBUGGING ФУНКЦИИ
-// ===============================
-
 /**
- * ФУНКЦИЯ ЗА ТЕСТВАНЕ НА BACKEND CONNECTION
- * Отворете Console и изпълнете: testBackendConnection()
+ * Logout функция (за глобално използване)
  */
-window.testBackendConnection = async function() {
-    console.log('🧪 Testing backend connection...');
-    
-    try {
-        const response = await fetch('/api/auth/hash-password?password=test123');
-        const data = await response.json();
-        
-        if (response.ok) {
-            console.log('✅ Backend is working!', data);
-            return true;
-        } else {
-            console.log('❌ Backend error:', data);
-            return false;
-        }
-    } catch (error) {
-        console.error('❌ Cannot connect to backend:', error);
-        return false;
-    }
-};
+function handleLogout() {
+    console.log('🚪 Logging out user...');
 
-/**
- * ФУНКЦИЯ ЗА ДИРЕКТНО ТЕСТВАНЕ НА LOGIN
- * Отворете Console и изпълнете: testLogin('admin', 'Admin123@')
- */
-window.testLogin = async function(username, password) {
-    console.log(`🧪 Testing login with: ${username} / ${password}`);
-    
-    try {
-        const response = await fetch('/api/auth/login', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                username: username,
-                password: password
-            })
-        });
-        
-        const data = await response.json();
-        
-        if (response.ok) {
-            console.log('✅ Login test successful:', data);
-        } else {
-            console.log('❌ Login test failed:', data);
-        }
-        
-        return data;
-    } catch (error) {
-        console.error('❌ Login test error:', error);
-        return null;
-    }
-};
+    // Изчистване на session данни
+    sessionStorage.removeItem('currentUser');
+    sessionStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('currentUser');
+
+    // Пренасочване към login
+    window.location.href = 'login.html';
+}
+
+// Expose logout function globally for use in other pages
+window.handleLogout = handleLogout;
