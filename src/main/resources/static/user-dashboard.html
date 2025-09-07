@@ -1,114 +1,89 @@
 <!DOCTYPE html>
-<html lang="bg">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Schedule - Employee Dashboard</title>
+    <title>Calendar with Weekly Hours</title>
+
+    <!-- FullCalendar -->
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.9.0/main.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.9.0/main.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.9.0/locales-all.min.js"></script>
+
+
+    <!-- Custom styles -->
     <link rel="stylesheet" href="style.css">
-    <link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css' rel='stylesheet' />
-    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js'></script>
+
+    <!-- jsPDF (ако Weekly Hours ще се експортира в PDF) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body>
-<!-- LOADING SCREEN -->
-<div id="loadingScreen" class="loading-screen">
-    <div class="loading-content">
-        <div class="spinner"></div>
-        <p>Loading your schedule...</p>
+<!-- Sidebar -->
+<div id="sidebar">
+    <div class="sidebar-header">
+        <img src="images/logo.png" alt="App Logo" id="sidebar-logo">
+        <button class="sidebar-toggle" id="sidebarToggle" title="Collapse Sidebar">
+            <span class="arrows">&lt;&lt;</span>
+        </button>
+    </div>
+    <div style="display:none;">
+        <!-- вече добавените -->
+        <select id="employeeSelect"><option value="">Dummy</option></select>
+        <select id="activityInput"><option value="">Dummy</option></select>
+        <input type="time" id="start-time">
+        <input type="time" id="end-time">
+
+        <!-- допълнителни dummy елементи -->
+        <select id="leaveType"><option value="">None</option></select>
+        <select id="hourlyRate"><option value="">0</option></select>
+        <input type="hidden" id="edit-event-id" value="0">
+        <input type="hidden" id="current-event-date" value="">
+        <select id="edit-activity"><option value="">Dummy</option></select>
+    </div>
+
+    <!-- Logout -->
+    <button id="logout-btn" class="logout-btn" data-tooltip="Logout from Admin Profile">
+        <span class="logout-icon">🏃‍♂️</span>
+        <span class="button-text">Logout</span>
+    </button>
+
+    <!-- Weekly Hours -->
+    <div id="weekly-schedule-section" class="weekly-schedule-section">
+        <div class="weekly-schedule-header">
+            <h3 id="weekly-schedule-title">📊 Weekly hours</h3>
+            <button id="weekly-schedule-toggle" class="weekly-schedule-toggle-btn" title="Show/Hide Weekly Schedule">
+                <span class="toggle-icon">📊</span>
+                <span class="toggle-text">More Info</span>
+            </button>
+        </div>
+        <div id="weekly-schedule-content" class="weekly-schedule-content hidden">
+            <div id="weekly-schedule-table-container" class="weekly-schedule-table-container">
+                <table id="weekly-schedule-table" class="weekly-schedule-table">
+                    <thead>
+                    <tr>
+                        <th>C.W.</th>
+                        <th>Working hours</th>
+                        <th>Total hours</th>
+                    </tr>
+                    </thead>
+                    <tbody id="weekly-schedule-tbody"></tbody>
+                </table>
+            </div>
+            <div id="weekly-schedule-summary" class="weekly-schedule-summary"></div>
+        </div>
     </div>
 </div>
 
-<!-- MAIN CONTAINER -->
-<div class="app-container">
-    <!-- SIDEBAR -->
-    <aside class="sidebar">
-        <div class="sidebar-header">
-            <div class="logo">
-                <img src="images/shopping.png" alt="Company Logo" class="logo-img">
-                <span class="logo-text">My Schedule</span>
-            </div>
-        </div>
-
-        <nav class="sidebar-nav">
-            <!-- WEEKLY HOURS SECTION -->
-            <div class="nav-section">
-                <h3 class="nav-section-title">📊 Weekly Hours</h3>
-                <div class="weekly-hours-widget">
-                    <div class="hours-display">
-                        <div class="current-week">
-                            <span class="week-label">This Week:</span>
-                            <span class="hours-value" id="currentWeekHours">0h</span>
-                        </div>
-                        <div class="hours-breakdown" id="hoursBreakdown">
-                            <div class="breakdown-item">
-                                <span>Scheduled:</span>
-                                <span id="scheduledHours">0h</span>
-                            </div>
-                            <div class="breakdown-item">
-                                <span>Worked:</span>
-                                <span id="workedHours">0h</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- USER INFO SECTION -->
-            <div class="nav-section">
-                <div class="user-info">
-                    <div class="user-avatar">
-                        <span id="userInitials">--</span>
-                    </div>
-                    <div class="user-details">
-                        <span class="user-name" id="userName">Loading...</span>
-                        <span class="user-role">Employee</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- LOGOUT BUTTON -->
-            <div class="nav-section">
-                <button class="logout-btn" id="logoutBtn">
-                    <span class="logout-icon">🚪</span>
-                    <span>Logout</span>
-                </button>
-            </div>
-        </nav>
-    </aside>
-
-    <!-- MAIN CONTENT -->
-    <main class="main-content">
-        <!-- HEADER -->
-        <header class="main-header">
-            <div class="header-content">
-                <h1 class="page-title">My Work Schedule</h1>
-                <div class="header-info">
-                    <span class="current-date" id="currentDate">Loading...</span>
-                </div>
-            </div>
-        </header>
-
-        <!-- CALENDAR SECTION -->
-        <section class="calendar-section">
-            <div class="calendar-header">
-                <h2>Your Schedule</h2>
-                <div class="calendar-legend">
-                    <div class="legend-item">
-                        <div class="legend-color work"></div>
-                        <span>Work Shift</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-color leave"></div>
-                        <span>Leave/Vacation</span>
-                    </div>
-                </div>
-            </div>
-
-            <div id="calendar" class="calendar-container"></div>
-        </section>
-    </main>
+<!-- Calendar -->
+<div id="calendar-container">
+    <div id="calendar"></div>
 </div>
 
-<!-- JAVASCRIPT -->
-<script src="userDashboardManager.js" defer></script>
+<!-- Scripts -->
+<script src="weeklyScheduleManager.js" defer></script>
+<script src="calendarManager.js" defer></script>
+<script src="logoutManager.js" defer></script>
+<script src="app.js" defer></script>
 </body>
 </html>

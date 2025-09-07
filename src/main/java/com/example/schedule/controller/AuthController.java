@@ -32,7 +32,7 @@ import java.util.Optional;
  * Всички endpoints са под /api/auth префикса
  *
  * @author Schedule Management System
- * @version 2.0
+ * @version 2.1 - Поправена логика за role-based редирект
  */
 @RestController
 @RequestMapping("/api/auth")
@@ -88,7 +88,7 @@ public class AuthController {
         try {
             System.out.println("📝 Registration attempt for: " + registrationDto.getUsername());
 
-            // Проверка за validation грешки от аннотациите
+            // Проверка за validation грешки от анотациите
             if (bindingResult.hasErrors()) {
                 StringBuilder errors = new StringBuilder();
                 bindingResult.getFieldErrors().forEach(error -> {
@@ -122,24 +122,6 @@ public class AuthController {
         }
     }
 
-    /**
-     * Определя към коя страница да пренасочи потребителя според ролята му
-     */
-    private String determineRedirectUrl(UserDto user) {
-        if (user.getRoles() == null || user.getRoles().isEmpty()) {
-            return "user-dashboard.html"; // По подразбиране към USER dashboard
-        }
-
-        // Проверяваме ролите - ADMIN има най-висок приоритет
-        if (user.getRoles().contains("ADMIN")) {
-            return "index.html"; // Пълен админ dashboard
-        } else if (user.getRoles().contains("MANAGER")) {
-            return "index.html"; // За момента manager-ите също отиват към пълния dashboard
-        } else {
-            return "user-dashboard.html"; // USER роля - опростена страница
-        }
-    }
-
     // ===============================
     // АВТЕНТИКАЦИОННИ ENDPOINTS
     // ===============================
@@ -148,6 +130,7 @@ public class AuthController {
      * ЛОГИН НА ПОТРЕБИТЕЛ
      *
      * Автентикира потребител по username и парола
+     * ПОПРАВЕНА ВЕРСИЯ с правилна role-based логика за пренасочване
      *
      * POST /api/auth/login
      * Content-Type: application/json
@@ -163,9 +146,10 @@ public class AuthController {
         try {
             System.out.println("🔐 Login attempt for: " + loginRequest.getUsername());
 
+            // Автентикация на потребителя
             UserDto user = authService.authenticateUser(loginRequest.getUsername(), loginRequest.getPassword());
 
-            // Определяме към коя страница да пренасочим потребителя
+            // ПОПРАВЕНА ЛОГИКА: Определяме към коя страница да пренасочим потребителя
             String redirectUrl = determineRedirectUrl(user);
 
             Map<String, Object> response = new HashMap<>();
@@ -174,7 +158,9 @@ public class AuthController {
             response.put("redirectUrl", redirectUrl);
             response.put("message", "Успешен логин");
 
-            System.out.println("✅ Login successful for: " + user.getUsername() + " -> " + redirectUrl);
+            System.out.println("✅ Login successful for: " + user.getUsername() +
+                    " (roles: " + user.getRoles() + ") -> redirecting to: " + redirectUrl);
+
             return ResponseEntity.ok(response);
 
         } catch (RuntimeException e) {
@@ -186,6 +172,48 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(createErrorResponse("Възникна неочаквана грешка"));
         }
+    }
+
+    /**
+     * ПОПРАВЕНА ЛОГИКА ЗА ОПРЕДЕЛЯНЕ НА REDIRECT URL
+     *
+     * Проверява ролите на потребителя и определя към коя страница да го пренасочи:
+     * - ADMIN -> index.html (пълен административен панел)
+     * - USER -> user-dashboard.html (опростен потребителски панел)
+     *
+     * @param user UserDto обект с информация за потребителя
+     * @return String URL към който да се пренасочи потребителя
+     */
+    private String determineRedirectUrl(UserDto user) {
+        System.out.println("🔍 Determining redirect URL for user: " + user.getUsername());
+
+        // Проверка дали има роли
+        if (user.getRoles() == null || user.getRoles().isEmpty()) {
+            System.out.println("⚠️ No roles found for user, defaulting to user-dashboard.html");
+            return "user-dashboard.html";
+        }
+
+        System.out.println("🔍 User roles: " + user.getRoles());
+
+        // Проверяваме ролите - ADMIN има най-висок приоритет
+        for (String role : user.getRoles()) {
+            if ("ADMIN".equalsIgnoreCase(role)) {
+                System.out.println("👑 ADMIN role detected -> redirecting to index.html");
+                return "index.html"; // Пълен админ dashboard
+            }
+        }
+
+        // Ако няма ADMIN роля, проверяваме за MANAGER
+        for (String role : user.getRoles()) {
+            if ("MANAGER".equalsIgnoreCase(role)) {
+                System.out.println("👔 MANAGER role detected -> redirecting to index.html");
+                return "index.html"; // За момента manager-ите също отиват към пълния dashboard
+            }
+        }
+
+        // Всички останали роли (включително USER) отиват към опростената страница
+        System.out.println("👤 USER role or other -> redirecting to user-dashboard.html");
+        return "user-dashboard.html";
     }
 
     /**
@@ -201,73 +229,17 @@ public class AuthController {
             // За момента ще върнем mock данни
             // В реална имплементация това ще идва от security context или JWT токен
 
-            // Mock current user - това трябва да се замени с реална логика
-            Map<String, Object> currentUser = new HashMap<>();
-            currentUser.put("id", 1);
-            currentUser.put("username", "TestUser");
-            currentUser.put("employeeName", "Test Employee");
-            currentUser.put("roles", java.util.Arrays.asList("USER"));
-            currentUser.put("isActive", true);
-
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
-            response.put("user", currentUser);
+            response.put("message", "За момента не е имплементирано - използвайте session storage");
+            response.put("note", "Имплементирайте JWT или session management за production");
 
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            System.err.println("❌ Error getting current user: " + e.getMessage());
+            System.err.println("❌ Current user error: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(createErrorResponse("Грешка при получаване на потребителски данни"));
-        }
-    }
-
-    /**
-     * ПОЛУЧАВАНЕ НА СЪБИТИЯ ЗА ПОТРЕБИТЕЛ
-     *
-     * GET /api/auth/user-events/{userId}
-     * Връща събитията само за конкретния потребител
-     */
-    @GetMapping("/user-events/{userId}")
-    public ResponseEntity<?> getUserEvents(@PathVariable Long userId) {
-        try {
-            System.out.println("📅 Getting events for user: " + userId);
-
-            // Mock events - в реалната имплементация ще се извлича от базата
-            List<Map<String, Object>> mockEvents = new java.util.ArrayList<>();
-
-            // Work shift event
-            Map<String, Object> workEvent = new HashMap<>();
-            workEvent.put("id", 1);
-            workEvent.put("title", "Morning Shift");
-            workEvent.put("start", "2025-09-07T08:00:00");
-            workEvent.put("end", "2025-09-07T16:00:00");
-            workEvent.put("activity", "Cashier");
-            workEvent.put("employeeId", userId);
-            mockEvents.add(workEvent);
-
-            // Leave event
-            Map<String, Object> leaveEvent = new HashMap<>();
-            leaveEvent.put("id", 2);
-            leaveEvent.put("title", "Vacation");
-            leaveEvent.put("start", "2025-09-10");
-            leaveEvent.put("end", "2025-09-11");
-            leaveEvent.put("leaveType", "Vacation");
-            leaveEvent.put("employeeId", userId);
-            mockEvents.add(leaveEvent);
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("events", mockEvents);
-            response.put("count", mockEvents.size());
-
-            System.out.println("✅ Retrieved " + mockEvents.size() + " events for user " + userId);
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
-            System.err.println("❌ Error getting user events: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(createErrorResponse("Грешка при получаване на събития"));
+                    .body(createErrorResponse("Грешка при получаване на текущ потребител"));
         }
     }
 
@@ -282,20 +254,6 @@ public class AuthController {
      * на dropdown менюто със служители които още нямат потребителски акаунти
      *
      * GET /api/auth/available-employees
-     *
-     * Response 200:
-     * {
-     *   "employees": [
-     *     {
-     *       "id": 1,
-     *       "name": "Иван",
-     *       "lastname": "Петров",
-     *       "email": "ivan.petrov@company.com"
-     *     }
-     *   ],
-     *   "count": 1,
-     *   "message": "Намерени са 1 налични служители"
-     * }
      */
     @GetMapping("/available-employees")
     public ResponseEntity<?> getAvailableEmployees() {
@@ -415,7 +373,7 @@ public class AuthController {
         } catch (Exception e) {
             System.err.println("❌ Error fetching user by ID: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(createErrorResponse("Грешка при получаване на потребителя"));
+                    .body(createErrorResponse("Грешка при получаване на потребител"));
         }
     }
 
@@ -442,7 +400,7 @@ public class AuthController {
         } catch (Exception e) {
             System.err.println("❌ Error fetching user by username: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(createErrorResponse("Грешка при получаване на потребителя"));
+                    .body(createErrorResponse("Грешка при получаване на потребител"));
         }
     }
 
@@ -453,6 +411,7 @@ public class AuthController {
     /**
      * ENDPOINT ЗА ХЕШИРАНЕ НА ПАРОЛИ
      * ВАЖНО: Този endpoint трябва да се премахне в production!
+     *
      * Използва се само за генериране на хеширани пароли за SQL вмъкване
      *
      * GET /api/auth/hash-password?password=yourpassword
@@ -539,6 +498,7 @@ public class AuthController {
         response.put("service", "AuthController");
         response.put("timestamp", java.time.LocalDateTime.now());
         response.put("message", "Authentication service is running");
+        response.put("version", "2.1 - Fixed role-based redirect");
 
         return ResponseEntity.ok(response);
     }
@@ -568,35 +528,5 @@ public class AuthController {
         response.put("data", data);
         response.put("timestamp", java.time.LocalDateTime.now());
         return response;
-    }
-
-    // ===============================
-    // EXCEPTION HANDLING
-    // ===============================
-
-    /**
-     * Global exception handler за този контролер
-     */
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<?> handleGlobalException(Exception e) {
-        System.err.println("❌ Unexpected error in AuthController: " + e.getMessage());
-        e.printStackTrace();
-
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(createErrorResponse("Възникна неочаквана грешка в сървъра"));
-    }
-
-    /**
-     * Validation exception handler
-     */
-    @ExceptionHandler(org.springframework.web.bind.MethodArgumentNotValidException.class)
-    public ResponseEntity<?> handleValidationException(org.springframework.web.bind.MethodArgumentNotValidException e) {
-        StringBuilder errors = new StringBuilder();
-        e.getBindingResult().getFieldErrors().forEach(error -> {
-            errors.append(error.getDefaultMessage()).append(". ");
-        });
-
-        System.err.println("❌ Validation error: " + errors.toString());
-        return ResponseEntity.badRequest().body(createErrorResponse(errors.toString().trim()));
     }
 }

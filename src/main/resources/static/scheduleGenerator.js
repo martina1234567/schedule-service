@@ -97,13 +97,15 @@ function createScheduleGeneratorModal() {
 
                 <div class="generation-settings">
                     <div class="form-group">
-                        <label for="generation-year">Year:</label>
-                        <select id="generation-year" class="form-control">
-                            <option value="${currentYear - 1}">${currentYear - 1}</option>
-                            <option value="${currentYear}" selected>${currentYear}</option>
-                            <option value="${currentYear + 1}">${currentYear + 1}</option>
-                        </select>
+                      <select id="generation-year" class="form-control" required>
+                        <option value="">Select year</option>
+                        <option value="${currentYear - 1}">${currentYear - 1}</option>
+                        <option value="${currentYear}">${currentYear}</option>
+                        <option value="${currentYear + 1}">${currentYear + 1}</option>
+                      </select>
+                      <label for="generation-year">Year</label>
                     </div>
+
 
                     <div class="form-group">
                         <label for="generation-month">Month:</label>
