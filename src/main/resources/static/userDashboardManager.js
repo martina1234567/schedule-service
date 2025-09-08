@@ -1,11 +1,11 @@
 /**
- * USER DASHBOARD JAVASCRIPT - ПОПРАВЕНА ВЕРСИЯ БЕЗ КОНФЛИКТИ
- * Показва само личния график на логнатия потребител
- * Използва реални API извиквания към backend-а
+ * USER DASHBOARD JAVASCRIPT - FINAL FIXED VERSION
+ * Shows only the personal schedule of the logged-in user
+ * Uses real API calls to the backend
  */
 
-// Global variables - избягваме конфликти с други JS файлове
-let userDashboardCalendar; // Променено име за да избегнем конфликт
+// Global variables - avoid conflicts with other JS files
+let userDashboardCalendar; // Changed name to avoid conflict
 let currentUserData = null;
 let currentWeekStart = null;
 
@@ -13,7 +13,7 @@ let currentWeekStart = null;
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 User Dashboard loading...');
 
-    // Проверяваме дали всички нужни елементи съществуват
+    // Check if all required elements exist
     if (!checkRequiredElements()) {
         console.error('❌ Required HTML elements are missing');
         showError('Page structure error. Please contact administrator.');
@@ -32,6 +32,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Update current date display
     updateCurrentDate();
 
+    // 🔧 CRITICAL FIX: Initialize weekly schedule manager AFTER calendar is created
+    initializeWeeklyScheduleManagerForUserDashboard();
+
     // Hide loading screen
     setTimeout(() => {
         const loadingScreen = document.getElementById('loadingScreen');
@@ -42,14 +45,28 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 /**
- * Проверява дали всички нужни HTML елементи съществуват
+ * 🔧 NEW FUNCTION: Initialize weekly schedule manager specifically for user dashboard
+ */
+function initializeWeeklyScheduleManagerForUserDashboard() {
+    console.log('📊 Initializing Weekly Schedule Manager for User Dashboard...');
+
+    // Initialize the weekly schedule manager if the function exists
+    if (typeof initializeWeeklyScheduleManager === "function") {
+        initializeWeeklyScheduleManager();
+        console.log('✅ Weekly Schedule Manager initialized successfully');
+    } else {
+        console.warn('⚠️ initializeWeeklyScheduleManager function not found');
+    }
+}
+
+/**
+ * Check if all required HTML elements exist
  */
 function checkRequiredElements() {
     const requiredElements = [
         'calendar',
         'userName',
-        'userInitials',
-        'currentDate'
+        'userInitials'
     ];
 
     let allExist = true;
@@ -67,6 +84,7 @@ function checkRequiredElements() {
 
 /**
  * Initialize FullCalendar for read-only view
+ * 🔧 FIXED: Now properly exposes calendar to window for weeklyScheduleManager
  */
 function initializeCalendar() {
     const calendarEl = document.getElementById('calendar');
@@ -87,7 +105,8 @@ function initializeCalendar() {
         selectable: false, // Read-only for users
         editable: false,   // No editing allowed
         droppable: false,  // No drag & drop
-        eventDisplay: 'block',
+        eventDisplay: 'list-item',
+        eventClassNames: ['fc-daygrid-dot-event'],
         dayMaxEvents: 3,
 
         // Event styling
@@ -115,23 +134,28 @@ function initializeCalendar() {
     });
 
     userDashboardCalendar.render();
+
+    // 🔧 CRITICAL FIX: Expose calendar globally for weeklyScheduleManager
+    window.calendar = userDashboardCalendar;
+
     console.log('📅 User Dashboard Calendar initialized in read-only mode');
+    console.log('✅ Calendar exposed globally as window.calendar for weeklyScheduleManager compatibility');
 }
 
 /**
- * ГЛАВНА ФУНКЦИЯ: Зарежда данните на потребителя и неговите събития
+ * MAIN FUNCTION: Loads user data and their events
  */
 async function loadUserDataAndEvents() {
     try {
         console.log('🔍 Loading user data and events...');
 
-        // СТЪПКА 1: Получаваме информацията за текущия потребител от session
+        // STEP 1: Get current user information from session
         const userData = await getCurrentUserFromSession();
 
         if (!userData || !userData.success) {
             console.error('❌ Failed to get current user data');
             showError('Failed to load your profile. Please login again.');
-            // Пренасочваме към login страницата
+            // Redirect to login page
             setTimeout(() => {
                 window.location.href = 'login.html';
             }, 2000);
@@ -141,18 +165,36 @@ async function loadUserDataAndEvents() {
         currentUserData = userData.user;
         console.log('✅ Current user loaded:', currentUserData.username, 'Employee ID:', currentUserData.employeeId);
 
-        // СТЪПКА 2: Обновяваме display-а с информацията на потребителя
+        // STEP 2: Update display with user information
         updateUserDisplay();
 
-        // СТЪПКА 3: Проверяваме дали потребителят има employee ID
+        // STEP 3: Check if user has employee ID
         if (!currentUserData.employeeId) {
             console.error('❌ User has no employee ID assigned');
             showError('Your account is not linked to an employee profile. Please contact administrator.');
             return;
         }
 
-        // СТЪПКА 4: Зареждаме събитията на потребителя
+        // STEP 4: Load user events
         await loadUserEvents(currentUserData.employeeId);
+
+        // STEP 5: Initialize weekly schedule for the current user
+        // Wait a bit to ensure everything is properly initialized
+        setTimeout(() => {
+            if (typeof loadAndShowWeeklySchedule === "function") {
+                const employeeId = currentUserData.employeeId;
+                const employeeName = currentUserData.employeeName || currentUserData.username;
+
+                // Set value in hidden select to avoid errors
+                const employeeSelect = document.getElementById("employeeSelect");
+                if (employeeSelect) {
+                    employeeSelect.innerHTML = `<option value="${employeeId}" selected>${employeeName}</option>`;
+                }
+
+                console.log('📊 Loading weekly schedule for current user...');
+                loadAndShowWeeklySchedule(employeeId, employeeName);
+            }
+        }, 500);
 
     } catch (error) {
         console.error('❌ Error loading user data and events:', error);
@@ -161,13 +203,13 @@ async function loadUserDataAndEvents() {
 }
 
 /**
- * НОВА ФУНКЦИЯ: Получава информацията за текущия потребител от session storage
+ * NEW FUNCTION: Gets current user information from session storage
  */
 async function getCurrentUserFromSession() {
     try {
         console.log('🔐 Getting current user from session...');
 
-        // Проверяваме session storage
+        // Check session storage
         const isLoggedIn = sessionStorage.getItem('isLoggedIn');
         const currentUserSessionData = sessionStorage.getItem('currentUser');
 
@@ -181,16 +223,16 @@ async function getCurrentUserFromSession() {
             return { success: false, message: 'No user data in session' };
         }
 
-        // Парсваме user data
+        // Parse user data
         const user = JSON.parse(currentUserSessionData);
         console.log('📋 User data from session:', user);
 
-        // ВАЖНО: Валидираме данните със сървъра
+        // IMPORTANT: Validate data with server
         const validation = await validateSessionWithServer(user.username);
 
         if (!validation.success) {
             console.log('❌ Session validation failed:', validation.message);
-            // Изчистваме невалидната сесия
+            // Clear invalid session
             sessionStorage.clear();
             return { success: false, message: 'Session expired' };
         }
@@ -205,7 +247,7 @@ async function getCurrentUserFromSession() {
 }
 
 /**
- * НОВА ФУНКЦИЯ: Валидира сесията със сървъра
+ * NEW FUNCTION: Validates session with server
  */
 async function validateSessionWithServer(username) {
     try {
@@ -236,13 +278,13 @@ async function validateSessionWithServer(username) {
 }
 
 /**
- * ОБНОВЕНА ФУНКЦИЯ: Зарежда събитията за конкретен служител
+ * UPDATED FUNCTION: Loads events for specific employee
  */
 async function loadUserEvents(employeeId) {
     try {
         console.log(`📅 Loading events for employee ID: ${employeeId}...`);
 
-        // СТЪПКА 1: Проверяваме дали имаме право да виждаме събитията на този служител
+        // STEP 1: Check if we have permission to view this employee's events
         const accessValidation = await validateEmployeeAccess(employeeId);
 
         if (!accessValidation.hasAccess) {
@@ -253,7 +295,7 @@ async function loadUserEvents(employeeId) {
 
         console.log('✅ Access granted:', accessValidation.reason);
 
-        // СТЪПКА 2: Зареждаме събитията
+        // STEP 2: Load events
         const response = await fetch(`/events/employee/${employeeId}`, {
             method: 'GET',
             headers: {
@@ -268,7 +310,7 @@ async function loadUserEvents(employeeId) {
         const events = await response.json();
         console.log(`✅ Loaded ${events.length} events from server`);
 
-        // СТЪПКА 3: Конвертираме събитията в FullCalendar формат
+        // STEP 3: Convert events to FullCalendar format
         const calendarEvents = events.map(event => {
             return {
                 id: event.id,
@@ -285,7 +327,7 @@ async function loadUserEvents(employeeId) {
             };
         });
 
-        // СТЪПКА 4: Добавяме събитията в календара
+        // STEP 4: Add events to calendar
         if (userDashboardCalendar) {
             userDashboardCalendar.removeAllEvents();
             userDashboardCalendar.addEventSource(calendarEvents);
@@ -305,7 +347,7 @@ async function loadUserEvents(employeeId) {
 }
 
 /**
- * НОВА ФУНКЦИЯ: Проверява дали потребителят има право да вижда събитията на служител
+ * NEW FUNCTION: Checks if user has permission to view employee events
  */
 async function validateEmployeeAccess(employeeId) {
     try {
@@ -343,7 +385,7 @@ async function validateEmployeeAccess(employeeId) {
 function updateUserDisplay() {
     if (!currentUserData) return;
 
-    // Update user name - използваме employeeName ако е налично, иначе username
+    // Update user name - use employeeName if available, otherwise username
     const displayName = currentUserData.employeeName || currentUserData.username;
 
     const userNameElement = document.getElementById('userName');
@@ -435,18 +477,13 @@ function updateCurrentDate() {
         month: 'long',
         day: 'numeric'
     };
-
-    const currentDateElement = document.getElementById('currentDate');
-    if (currentDateElement) {
-        currentDateElement.textContent = now.toLocaleDateString('bg-BG', options);
-    }
 }
 
 /**
  * Setup event listeners
  */
 function setupEventListeners() {
-    // Logout button - проверяваме дали съществува
+    // Logout button - check if exists
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {
         logoutBtn.addEventListener('click', handleLogout);
@@ -477,7 +514,7 @@ function handleLogout() {
 function showError(message) {
     console.error('❌ Error:', message);
 
-    // Създаваме по-професионален error display
+    // Create professional error display
     const errorDiv = document.createElement('div');
     errorDiv.className = 'error-message';
     errorDiv.style.cssText = `

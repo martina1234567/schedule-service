@@ -3589,3 +3589,16 @@ input[type="time"]::-webkit-calendar-picker-indicator {
     opacity: 1 !important;
     display: block !important;
 }
+
+.fc-daygrid-event-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--fc-event-bg-color, #3788d8);
+  margin-right: 4px;
+}
+
+#userName {
+  color: #007bff;
+}

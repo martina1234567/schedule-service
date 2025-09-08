@@ -284,11 +284,21 @@ async function loadAndShowWeeklySchedule(employeeId, employeeName) {
         }
 
         const allEmployees = await employeeResponse.json();
-        const selectedEmployee = allEmployees.find(emp => emp.id.toString() === employeeId);
+        console.log("📋 Employees from backend:", allEmployees);
+
+        // Покажи всички ID-та за дебъг
+        const employeeIds = allEmployees.map(e => e.id);
+        console.log("📋 Employee IDs available:", employeeIds);
+
+        // Опитваме да намерим нашия user
+        const selectedEmployee = allEmployees.find(emp => emp.id.toString() === employeeId.toString());
 
         if (!selectedEmployee) {
-            throw new Error(`Employee with ID ${employeeId} not found`);
+            console.error(`❌ Could not find employee with ID ${employeeId} in backend list`);
+            console.warn("⚠️ Maybe currentUserData.employeeId is wrong or user is not in employees table?");
+            throw new Error(`Employee with ID ${employeeId} not found (Available IDs: ${employeeIds.join(", ")})`);
         }
+
 
         // Запазваме дневните часове от договора (4, 6 или 8 часа дневно)
         currentEmployeeHourlyRate = selectedEmployee.hourlyRate;
@@ -1048,13 +1058,14 @@ function getCurrentEmployeeWeeklyContractHours() {
 }
 
 /**
- * ФУНКЦИЯ: Настройва event listener за промяна на месеца в календара
- * Когато потребителят навигира до друг месец, актуализираме таблицата
+ * FUNCTION: Sets up calendar month change listener
+ * When user navigates to another month, updates the weekly schedule table
+ * 🔧 FIXED: Now properly handles both admin dashboard and user dashboard
  */
 function setupCalendarMonthChangeListener() {
     console.log('📅 Setting up calendar month change listener with paid leave support...');
 
-    // Функция за добавяне на listener когато календарът е готов
+    // Function to add listener when calendar is ready
     function addCalendarListener() {
         if (!window.calendar) {
             console.log('⏳ Calendar not ready yet, waiting...');
@@ -1062,13 +1073,13 @@ function setupCalendarMonthChangeListener() {
         }
 
         try {
-            // Проверяваме дали календарът има метода on()
+            // Check if calendar has on() method
             if (typeof window.calendar.on !== 'function') {
                 console.log('⏳ Calendar API not fully loaded, waiting...');
                 return false;
             }
 
-            // Добавяме event listener за промяна на view-то (месеца)
+            // Add event listener for view change (month change)
             window.calendar.on('datesSet', function(info) {
                 console.log('📅 Calendar month/view changed:', {
                     start: info.start,
@@ -1076,20 +1087,8 @@ function setupCalendarMonthChangeListener() {
                     viewType: info.view.type
                 });
 
-                // Проверяваме дали има избран служител
-                if (currentSelectedEmployeeId) {
-                    const employeeSelect = document.getElementById('employeeSelect');
-                    const selectedEmployeeName = employeeSelect && employeeSelect.value === currentSelectedEmployeeId ?
-                        employeeSelect.options[employeeSelect.selectedIndex]?.textContent?.trim() :
-                        'Служител';
-
-                    console.log(`🔄 Calendar month changed, refreshing weekly schedule for employee ${selectedEmployeeName} (ID: ${currentSelectedEmployeeId}) with paid leave logic`);
-
-                    // Актуализираме таблицата за новия месец (включва платените отпуски)
-                    loadAndShowWeeklySchedule(currentSelectedEmployeeId, selectedEmployeeName);
-                } else {
-                    console.log('ℹ️ No employee selected, skipping weekly schedule refresh');
-                }
+                // 🔧 CRITICAL FIX: Handle both admin dashboard and user dashboard cases
+                handleCalendarMonthChange();
             });
 
             console.log('✅ Calendar month change listener set up successfully with paid leave support');
@@ -1101,12 +1100,12 @@ function setupCalendarMonthChangeListener() {
         }
     }
 
-    // Опитваме се да добавим listener веднага
+    // Try to add listener immediately
     if (addCalendarListener()) {
-        return; // Успешно добавен
+        return; // Successfully added
     }
 
-    // Ако не успяхме, чакаме календарът да се инициализира
+    // If we fail, wait for calendar to initialize
     let attempts = 0;
     const maxAttempts = 10;
     const interval = setInterval(() => {
@@ -1119,7 +1118,147 @@ function setupCalendarMonthChangeListener() {
             clearInterval(interval);
             console.warn('⚠️ Failed to set up calendar month change listener after maximum attempts');
         }
-    }, 500); // Проверяваме на всеки 500ms
+    }, 500); // Check every 500ms
+}
+
+/**
+ * 🔧 NEW FUNCTION: Handles calendar month change for both admin and user dashboards
+ */
+function handleCalendarMonthChange() {
+    console.log('🔄 Handling calendar month change...');
+
+    // CASE 1: Admin dashboard - has employee selection dropdown
+    if (currentSelectedEmployeeId) {
+        console.log('🏢 Admin dashboard: Employee selected, refreshing weekly schedule');
+
+        const employeeSelect = document.getElementById('employeeSelect');
+        const selectedEmployeeName = employeeSelect && employeeSelect.value === currentSelectedEmployeeId ?
+            employeeSelect.options[employeeSelect.selectedIndex]?.textContent?.trim() :
+            'Employee';
+
+        console.log(`📄 Calendar month changed, refreshing weekly schedule for employee ${selectedEmployeeName} (ID: ${currentSelectedEmployeeId}) with paid leave logic`);
+
+        // Update the table for the new month (includes paid leave)
+        loadAndShowWeeklySchedule(currentSelectedEmployeeId, selectedEmployeeName);
+        return;
+    }
+
+    // CASE 2: User dashboard - check if we're in user dashboard mode
+    const isUserDashboard = checkIfUserDashboard();
+
+    if (isUserDashboard) {
+        console.log('👤 User dashboard detected: Refreshing weekly schedule for current user');
+
+        // Try to get current user data from global variable or session
+        const currentUser = getCurrentUserDataForDashboard();
+
+        if (currentUser && currentUser.employeeId) {
+            console.log(`📄 User dashboard: Refreshing weekly schedule for user ${currentUser.employeeName || currentUser.username} (ID: ${currentUser.employeeId})`);
+
+            // Set the global variable so future changes work
+            currentSelectedEmployeeId = currentUser.employeeId;
+
+            // Load weekly schedule for the current user
+            loadAndShowWeeklySchedule(currentUser.employeeId, currentUser.employeeName || currentUser.username);
+        } else {
+            console.warn('⚠️ User dashboard: No user data found for weekly schedule refresh');
+        }
+        return;
+    }
+
+    // CASE 3: Admin dashboard but no employee selected
+    console.log('ℹ️ Admin dashboard: No employee selected, skipping weekly schedule refresh');
+}
+
+/**
+ * 🔧 NEW FUNCTION: Checks if we're currently in user dashboard mode
+ */
+function checkIfUserDashboard() {
+    // Check multiple indicators that we're in user dashboard
+    const indicators = [
+        // Check if we're on user-dashboard.html page
+        window.location.pathname.includes('user-dashboard'),
+
+        // Check if there's user info display (user dashboard specific)
+        document.getElementById('userInitials') !== null,
+
+        // Check if there's NO employee dropdown (user dashboard has hidden one)
+        !document.getElementById('addEmployeeBtn'),
+
+        // Check if the employee select is hidden/dummy
+        (() => {
+            const employeeSelect = document.getElementById('employeeSelect');
+            return employeeSelect && (
+                employeeSelect.style.display === 'none' ||
+                employeeSelect.closest('[style*="display:none"]') !== null ||
+                employeeSelect.closest('[style*="display: none"]') !== null
+            );
+        })()
+    ];
+
+    const isUserDashboard = indicators.some(indicator => indicator === true);
+
+    console.log('🔍 Dashboard type check:', {
+        pathname: window.location.pathname,
+        hasUserInitials: !!document.getElementById('userInitials'),
+        hasAddEmployeeBtn: !!document.getElementById('addEmployeeBtn'),
+        employeeSelectHidden: (() => {
+            const employeeSelect = document.getElementById('employeeSelect');
+            return employeeSelect && (
+                employeeSelect.style.display === 'none' ||
+                employeeSelect.closest('[style*="display:none"]') !== null
+            );
+        })(),
+        conclusion: isUserDashboard ? 'USER DASHBOARD' : 'ADMIN DASHBOARD'
+    });
+
+    return isUserDashboard;
+}
+
+/**
+ * 🔧 NEW FUNCTION: Gets current user data for dashboard refresh
+ */
+function getCurrentUserDataForDashboard() {
+    // Try multiple sources for current user data
+
+    // Source 1: Global variable from userDashboardManager.js
+    if (typeof currentUserData !== 'undefined' && currentUserData) {
+        console.log('📋 Found user data from global variable:', currentUserData);
+        return currentUserData;
+    }
+
+    // Source 2: Session storage
+    try {
+        const sessionUserData = sessionStorage.getItem('currentUser');
+        if (sessionUserData) {
+            const userData = JSON.parse(sessionUserData);
+            console.log('📋 Found user data from session storage:', userData);
+            return userData;
+        }
+    } catch (error) {
+        console.warn('⚠️ Error reading user data from session storage:', error);
+    }
+
+    // Source 3: Hidden employee select (set by userDashboardManager)
+    try {
+        const employeeSelect = document.getElementById('employeeSelect');
+        if (employeeSelect && employeeSelect.value) {
+            const selectedOption = employeeSelect.options[employeeSelect.selectedIndex];
+            if (selectedOption && selectedOption.textContent) {
+                console.log('📋 Found user data from hidden employee select');
+                return {
+                    employeeId: employeeSelect.value,
+                    employeeName: selectedOption.textContent.trim(),
+                    username: selectedOption.textContent.trim()
+                };
+            }
+        }
+    } catch (error) {
+        console.warn('⚠️ Error reading user data from employee select:', error);
+    }
+
+    console.warn('⚠️ No user data found from any source');
+    return null;
 }
 
 /**
