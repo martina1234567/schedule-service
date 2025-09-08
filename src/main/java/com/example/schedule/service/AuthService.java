@@ -516,4 +516,104 @@ public class AuthService {
 
         return dto;
     }
+    /**
+     * Намира потребител по username и връща UserDto
+     * Този метод се използва за валидация на сесии
+     *
+     * @param username - потребителското име
+     * @return UserDto обект или null ако не е намерен
+     */
+    public UserDto findUserByUsername(String username) {
+        try {
+            System.out.println("🔍 Finding user by username: " + username);
+
+            if (username == null || username.trim().isEmpty()) {
+                System.out.println("❌ Username is null or empty");
+                return null;
+            }
+
+            // Намираме потребителя в базата данни
+            Optional<User> userOpt = userRepository.findByUsername(username.trim());
+
+            if (userOpt.isEmpty()) {
+                System.out.println("❌ User not found: " + username);
+                return null;
+            }
+
+            User user = userOpt.get();
+            System.out.println("✅ User found: " + user.getUsername());
+
+            // Конвертираме към UserDto
+            UserDto userDto = convertToUserDto(user);
+
+            System.out.println("✅ UserDto created - Employee ID: " + userDto.getEmployeeId() +
+                    ", Roles: " + userDto.getRoles());
+
+            return userDto;
+
+        } catch (Exception e) {
+            System.err.println("❌ Error finding user by username: " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
+    }
+    /**
+     * Проверява дали потребител има конкретна роля
+     * Помощен метод за авторизация
+     *
+     * @param user - UserDto обект
+     * @param roleName - името на ролята за проверка
+     * @return true ако потребителят има ролята
+     */
+    public boolean userHasRole(UserDto user, String roleName) {
+        if (user == null || user.getRoles() == null || roleName == null) {
+            return false;
+        }
+
+        return user.getRoles().stream()
+                .anyMatch(role -> role.equalsIgnoreCase(roleName.trim()));
+    }
+
+    /**
+     * Проверява дали потребител може да достъпи данните на конкретен служител
+     * Бизнес логика за контрол на достъпа
+     *
+     * @param user - UserDto на потребителя който прави заявката
+     * @param targetEmployeeId - ID на служителя чиито данни искаме
+     * @return true ако има достъп
+     */
+    public boolean canAccessEmployeeData(UserDto user, Long targetEmployeeId) {
+        if (user == null || targetEmployeeId == null) {
+            return false;
+        }
+
+        // Админите могат да виждат всичко
+        if (userHasRole(user, "ADMIN")) {
+            System.out.println("✅ Access granted: Admin role");
+            return true;
+        }
+
+        // Мениджърите могат да виждат всичко
+        if (userHasRole(user, "MANAGER")) {
+            System.out.println("✅ Access granted: Manager role");
+            return true;
+        }
+
+        // Обикновените потребители могат да виждат само своите данни
+        // Проверяваме за USER роля (case-insensitive)
+        if (userHasRole(user, "USER") || userHasRole(user, "user")) {
+            if (user.getEmployeeId() != null && user.getEmployeeId().equals(targetEmployeeId)) {
+                System.out.println("✅ Access granted: Own employee data");
+                return true;
+            } else {
+                System.out.println("❌ Access denied: Can only view own employee data");
+                System.out.println("User employee ID: " + user.getEmployeeId() + ", Requested: " + targetEmployeeId);
+                return false;
+            }
+        }
+
+        System.out.println("❌ Access denied: No valid role found");
+        return false;
+    }
+
 }

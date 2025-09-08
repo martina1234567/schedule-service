@@ -6,6 +6,7 @@ import com.example.schedule.dto.LoginRequestDto;
 import com.example.schedule.entity.Employee;
 import com.example.schedule.service.AuthService;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -214,33 +215,6 @@ public class AuthController {
         // Всички останали роли (включително USER) отиват към опростената страница
         System.out.println("👤 USER role or other -> redirecting to user-dashboard.html");
         return "user-dashboard.html";
-    }
-
-    /**
-     * ПОЛУЧАВАНЕ НА ТЕКУЩ ПОТРЕБИТЕЛ
-     *
-     * GET /api/auth/current-user
-     * Връща информация за текущо логнатия потребител
-     * За момента използва session storage или може да се имплементира с JWT
-     */
-    @GetMapping("/current-user")
-    public ResponseEntity<?> getCurrentUser() {
-        try {
-            // За момента ще върнем mock данни
-            // В реална имплементация това ще идва от security context или JWT токен
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("message", "За момента не е имплементирано - използвайте session storage");
-            response.put("note", "Имплементирайте JWT или session management за production");
-
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
-            System.err.println("❌ Current user error: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(createErrorResponse("Грешка при получаване на текущ потребител"));
-        }
     }
 
     // ===============================
@@ -528,5 +502,95 @@ public class AuthController {
         response.put("data", data);
         response.put("timestamp", java.time.LocalDateTime.now());
         return response;
+    }
+    /**
+     * ПОЛУЧАВАНЕ НА ТЕКУЩ ПОТРЕБИТЕЛ
+     *
+     * GET /api/auth/current-user
+     * Връща информация за текущо логнатия потребител
+     * За момента използва session storage или може да
+     * се разшири за JWT token authentication
+     */
+    @GetMapping("/current-user")
+    public ResponseEntity<?> getCurrentUser() {
+        try {
+            System.out.println("🔍 Getting current user info...");
+
+            // ЗА МОМЕНТА: Използваме session storage approach
+            // В реална система това ще се замени с JWT token validation
+
+            // Опитваме се да намерим потребителя от session или token
+            // Това е placeholder логика - трябва да се адаптира според вашата authentication стратегия
+
+            // ВАЖНО: Това е временна логика за demo цели
+            // В production трябва да използвате правилна session/token validation
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "Session expired or not authenticated");
+            response.put("user", null);
+
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+
+        } catch (Exception e) {
+            System.err.println("❌ Error getting current user: " + e.getMessage());
+            e.printStackTrace();
+
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "Failed to get current user information");
+            errorResponse.put("error", e.getMessage());
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+
+    /**
+     * IMPROVED VERSION: Получаване на потребител от session storage
+     * Този метод ще се използва от frontend-а за да провери кой е логнатия потребител
+     */
+    @PostMapping("/validate-session")
+    public ResponseEntity<?> validateSession(@RequestBody Map<String, Object> sessionData) {
+        try {
+            System.out.println("🔐 Validating session data: " + sessionData);
+
+            // Получаваме username от session data
+            String username = (String) sessionData.get("username");
+
+            if (username == null || username.trim().isEmpty()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(createErrorResponse("No username provided in session"));
+            }
+
+            // Намираме потребителя в базата данни
+            UserDto user = authService.findUserByUsername(username);
+
+            if (user == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(createErrorResponse("User not found"));
+            }
+
+            // Проверяваме дали потребителят е активен
+            if (!user.isActiveUser()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(createErrorResponse("User account is inactive"));
+            }
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("user", user);
+            response.put("message", "Session valid");
+
+            System.out.println("✅ Session validated for user: " + user.getUsername() +
+                    " (Employee ID: " + user.getEmployeeId() + ")");
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            System.err.println("❌ Session validation error: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Session validation failed"));
+        }
     }
 }

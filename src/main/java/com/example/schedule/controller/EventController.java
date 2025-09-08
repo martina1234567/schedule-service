@@ -1,6 +1,7 @@
 package com.example.schedule.controller;
 
 import com.example.schedule.dto.EventDto;
+import com.example.schedule.dto.UserDto;
 import com.example.schedule.dto.WeeklyScheduleDto;
 import com.example.schedule.entity.Activity;
 import com.example.schedule.entity.Employee;
@@ -9,6 +10,7 @@ import com.example.schedule.exception.ValidationException;
 import com.example.schedule.repository.EventRepository;
 import com.example.schedule.repository.EmployeeRepository;
 import com.example.schedule.service.ActivityService;
+import com.example.schedule.service.AuthService;
 import com.example.schedule.service.ValidationService;
 import com.example.schedule.service.WeeklyScheduleService;
 import jakarta.transaction.Transactional;
@@ -17,12 +19,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.*;
+import java.util.stream.Collectors;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
-import java.util.Map;
-import java.util.HashMap;
 
 @RestController
 @RequestMapping("/events")
@@ -34,6 +35,8 @@ public class EventController {
     private final ValidationService validationService; // НОВА ЗАВИСИМОСТ
     private final WeeklyScheduleService weeklyScheduleService;
     private final ActivityService activityService;
+    @Autowired
+    private AuthService authService;
 
     /**
      * Конструктор с всички dependencies
@@ -351,6 +354,189 @@ public class EventController {
     @GetMapping("/schedules")
     public List<WeeklyScheduleDto> getWeeklySchedules() {
         return weeklyScheduleService.getAllWeeklySchedules();
+    }
+    /**
+     * НОВИ ENDPOINTS ЗА USER DASHBOARD
+     * Тези методи позволяват на потребителите да виждат само своите събития
+     *
+     * ВАЖНО: Добавете този import в началото на EventController.java:
+     * import com.example.schedule.service.AuthService;
+     * import java.util.stream.Collectors;
+     *
+     * И добавете този field в класа:
+     * @Autowired
+     * private AuthService authService;
+     */
+
+    /**
+     * GET метод за извличане на събития за конкретен служител
+     * Този endpoint ще се използва от user-dashboard за показване само на собствените събития
+     *
+     * @param employeeId - ID на служителя чиито събития искаме
+     * @return List<EventDto> - Списък със събития на служителя
+     */
+    @GetMapping("/employee/{employeeId}")
+    public ResponseEntity<?> getEventsByEmployee(@PathVariable Long employeeId) {
+        try {
+            System.out.println("📅 Loading events for employee ID: " + employeeId);
+
+            // Проверяваме дали служителят съществува
+            Optional<Employee> employeeOpt = employeeRepository.findById(employeeId);
+            if (employeeOpt.isEmpty()) {
+                return ResponseEntity.badRequest()
+                        .body(createErrorResponse("Employee not found with ID: " + employeeId));
+            }
+
+            Employee employee = employeeOpt.get();
+            System.out.println("✅ Found employee: " + employee.getName());
+
+            // Използваме специфичната заявка за този служител
+            List<Event> events = eventRepository.findEventsByEmployeeIdWithEmployee(employeeId);
+
+            System.out.println("📋 Found " + events.size() + " events for employee " + employee.getName());
+
+            // Конвертираме в EventDto формат за frontend-а
+            List<EventDto> eventDtos = events.stream()
+                    .map(this::convertToEventDto)
+                    .collect(Collectors.toList());
+
+            // Debug logging
+            eventDtos.forEach(event ->
+                    System.out.println("   📌 Event: " + event.getTitle() +
+                            " on " + event.getStart().toLocalDate() +
+                            " (" + (event.getLeaveType() != null ? event.getLeaveType() : "Work") + ")")
+            );
+
+            return ResponseEntity.ok(eventDtos);
+
+        } catch (Exception e) {
+            System.err.println("❌ Error loading events for employee " + employeeId + ": " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Failed to load events for employee"));
+        }
+    }
+
+    /**
+     * Конвертира Event entity към EventDto
+     * Този метод обработва правилно activity и employee информацията
+     */
+    private EventDto convertToEventDto(Event event) {
+        return new EventDto(
+                event.getId(),
+                event.getTitle(),
+                event.getStart(),
+                event.getEnd(),
+                event.getActivity() != null ? event.getActivity().getId() : null,
+                event.getActivity() != null ? event.getActivity().getName() : null,
+                event.getLeaveType(),
+                event.getEmployee().getName()
+        );
+    }
+
+    /**
+     * ВАЛИДАЦИОНЕН ENDPOINT ЗА USER DASHBOARD
+     * Проверява дали конкретен потребител има право да вижда събития на конкретен служител
+     *
+     * @param employeeId - ID на служителя
+     * @param requestData - данни от заявката (включително user info)
+     * @return ResponseEntity с разрешение или забрана
+     */
+    /**
+     * ПОПРАВЕНА ВЕРСИЯ НА validateEmployeeAccess МЕТОДА
+     * Заменете целия метод в EventController.java с този код
+     */
+    @PostMapping("/employee/{employeeId}/validate-access")
+    public ResponseEntity<?> validateEmployeeAccess(@PathVariable Long employeeId,
+                                                    @RequestBody Map<String, Object> requestData) {
+        try {
+            System.out.println("🔐 Validating access to employee " + employeeId + " events");
+
+            // Получаваме user информацията от заявката
+            String username = (String) requestData.get("username");
+
+            if (username == null || username.trim().isEmpty()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(createErrorResponse("Username required for validation"));
+            }
+
+            // Намираме потребителя
+            UserDto user = authService.findUserByUsername(username);
+
+            if (user == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(createErrorResponse("User not found"));
+            }
+
+            // ПОПРАВЕНА ЛОГИКА: Проверяваме достъпа със защитени проверки
+            boolean hasAccess = false;
+            String accessReason = "";
+
+            // Проверяваме ролите - case insensitive
+            List<String> userRoles = user.getRoles();
+            if (userRoles != null) {
+                // Конвертираме ролите в uppercase за сравнение
+                List<String> normalizedRoles = userRoles.stream()
+                        .map(role -> role.toUpperCase().trim())
+                        .collect(Collectors.toList());
+
+                System.out.println("User roles (normalized): " + normalizedRoles);
+                System.out.println("User employee ID: " + user.getEmployeeId());
+                System.out.println("Target employee ID: " + employeeId);
+
+                if (normalizedRoles.contains("ADMIN")) {
+                    hasAccess = true;
+                    accessReason = "Admin role - full access";
+                    System.out.println("✅ Access granted: Admin role");
+                } else if (normalizedRoles.contains("MANAGER")) {
+                    hasAccess = true;
+                    accessReason = "Manager role - full access";
+                    System.out.println("✅ Access granted: Manager role");
+                } else if (normalizedRoles.contains("USER")) {
+                    // За USER роля - може да вижда само собствените данни
+                    if (user.getEmployeeId() != null && user.getEmployeeId().equals(employeeId)) {
+                        hasAccess = true;
+                        accessReason = "Own employee data";
+                        System.out.println("✅ Access granted: Own employee data");
+                    } else {
+                        hasAccess = false;
+                        accessReason = "Can only view own schedule";
+                        System.out.println("❌ Access denied: Employee ID mismatch - User: " +
+                                user.getEmployeeId() + ", Requested: " + employeeId);
+                    }
+                } else {
+                    hasAccess = false;
+                    accessReason = "No valid role found";
+                    System.out.println("❌ Access denied: No valid role - User roles: " + normalizedRoles);
+                }
+            } else {
+                hasAccess = false;
+                accessReason = "No roles assigned to user";
+                System.out.println("❌ Access denied: No roles assigned");
+            }
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", hasAccess);
+            response.put("hasAccess", hasAccess);
+            response.put("reason", accessReason);
+            response.put("userRole", userRoles);
+            response.put("userEmployeeId", user.getEmployeeId());
+            response.put("requestedEmployeeId", employeeId);
+
+            if (hasAccess) {
+                System.out.println("✅ Final result: Access granted - " + accessReason);
+            } else {
+                System.out.println("❌ Final result: Access denied - " + accessReason);
+            }
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            System.err.println("❌ Error validating employee access: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Access validation failed"));
+        }
     }
 
 }
