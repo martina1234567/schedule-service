@@ -102,6 +102,11 @@ function initializeCalendar() {
             right: 'dayGridMonth,timeGridWeek'
         },
         height: 'auto',
+        eventTimeFormat: { // настройка на часа
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false // <--- това премахва AM/PM
+            },
         selectable: false, // Read-only for users
         editable: false,   // No editing allowed
         droppable: false,  // No drag & drop

@@ -106,14 +106,18 @@
             <div class="field-error" id="roleSelect-error" style="display: none;"></div>
         </div>
 
-        <!-- БУТОНИ -->
+        <!-- БУТОНИ — непосредствено след избора на роля -->
         <div class="form-actions">
-            <button type="submit" class="submit-btn" id="registerBtn">
-                <span class="btn-text">Създай акаунт</span>
-                <span class="btn-loading" style="display: none;">Създаване...</span>
-            </button>
+            <div class="button-row">
+                <button type="submit" class="login-btn" id="registerBtn">
+                    <span class="btn-text">Add account</span>
+                    <span class="btn-loading" style="display: none;">Създаване...</span>
+                </button>
 
-            <a href="login.html" class="link-btn">Вече имам акаунт</a>
+                <button type="button" class="login-btn" id="cancelBtn" title="Отказ и връщане назад">
+                    <span>❌ Cancel ❌</span>
+                </button>
+            </div>
         </div>
     </form>
 </div>

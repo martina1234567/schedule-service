@@ -463,3 +463,95 @@
             timeout = setTimeout(later, wait);
         };
     }
+    /**
+     * БУТОНИ "НАЗАД" И "ОТКАЗ" ЗА REGISTRATION ФОРМА
+     */
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('🔧 Setting up navigation buttons...');
+
+        // Намираме бутоните
+        const cancelBtn = document.getElementById('cancelBtn');
+
+
+        // Бутон "Отказ" под формата
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', function(event) {
+                event.preventDefault();
+                console.log('❌ Cancel button clicked');
+                handleBackNavigation();
+            });
+        }
+
+        console.log('✅ Navigation buttons configured');
+    });
+
+    /**
+     * Обработва навигацията назад към главната страница
+     */
+    function handleBackNavigation() {
+        // Проверяваме дали формата е била модифицирана
+        const form = document.getElementById('registrationForm');
+        const hasChanges = checkFormChanges(form);
+
+        if (hasChanges) {
+            // Питаме потребителя дали е сигурен
+            const confirmed = confirm(
+                'Имате незапазени промени. Сигурни ли сте, че искате да се върнете назад?'
+            );
+
+            if (!confirmed) {
+                console.log('🚫 User cancelled back navigation');
+                return;
+            }
+        }
+
+        // Показваме loading състояние
+        showBackLoading();
+
+        // Редиректваме
+        setTimeout(() => {
+            console.log('🔄 Redirecting back to index.html');
+            window.location.href = 'http://localhost:8080/index.html';
+        }, 500);
+    }
+
+    /**
+     * Проверява дали формата има промени
+     */
+    function checkFormChanges(form) {
+        const inputs = form.querySelectorAll('input, select');
+
+        for (let input of inputs) {
+            if (input.type !== 'hidden' && input.value.trim() !== '') {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Показва loading състояние на бутоните
+     */
+    function showBackLoading() {
+        const backBtn = document.getElementById('backBtn');
+        const cancelBtn = document.getElementById('cancelBtn');
+
+        if (backBtn) {
+            backBtn.innerHTML = `
+                <span class="back-icon">⏳</span>
+                <span class="back-text">Зарежда...</span>
+            `;
+            backBtn.disabled = true;
+            backBtn.style.opacity = '0.7';
+        }
+
+        if (cancelBtn) {
+            cancelBtn.innerHTML = `
+                <span class="cancel-icon">⏳</span>
+                <span class="cancel-text">Зарежда...</span>
+            `;
+            cancelBtn.disabled = true;
+            cancelBtn.style.opacity = '0.7';
+        }
+    }

@@ -38,8 +38,14 @@
             <span class="generate-icon">🔄</span>
             <span class="button-text">Generate Schedule</span>
         </button>
+        <button id="register-btn" class="register-btn" data-tooltip="Register New User">
+    <span class="register-icon">
+        🆕
+    </span>
+            <span class="button-text">Регистрация</span>
+        </button>
 
-    <!-- Контейнер за бутони за служители - Employee button container -->
+        <!-- Контейнер за бутони за служители - Employee button container -->
     <div class="button-container">
         <button id="employeeBtn" data-tooltip="Employee Options">Employee</button>
         <div class="extra-buttons">
@@ -227,7 +233,6 @@
 <div id="calendar-container">
     <div id="calendar"></div>
 </div>
-
 <!-- JavaScript файлове - зареждаме модулите в правилния ред -->
 <!-- ВАЖНО: validationManager.js се зарежда ПРЕДИ eventManager.js и calendarManager.js -->
 <script src="uiManager.js" defer></script>
@@ -241,6 +246,7 @@
 <script src="scheduleGenerator.js" defer></script>
 <script src="hourlyRateManager.js" defer></script>
 <script src="logoutManager.js" defer></script>
+<script src="registrationRedirect.js" defer></script>
 <script src="app.js" defer></script>
 </body>
 </html>

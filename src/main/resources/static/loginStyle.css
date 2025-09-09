@@ -1134,3 +1134,130 @@
         transform: translateY(0);
     }
 }
+/* Стилове за бутона "Назад" в header */
+.back-btn {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background: linear-gradient(135deg, #6c757d, #5a6268);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 15px;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    z-index: 10;
+}
+
+.back-btn:hover {
+    background: linear-gradient(135deg, #5a6268, #495057);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.back-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.back-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.back-icon {
+    font-size: 16px;
+}
+
+.back-text {
+    font-weight: 500;
+}
+
+/* Стилове за бутона "Отказ" */
+.cancel-btn {
+    background: linear-gradient(135deg, #dc3545, #c82333);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 20px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    margin-top: 10px;
+    width: 100%;
+}
+
+.cancel-btn:hover {
+    background: linear-gradient(135deg, #c82333, #bd2130);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+}
+
+.cancel-btn:active {
+    transform: translateY(0);
+}
+
+.cancel-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.cancel-icon {
+    font-size: 16px;
+}
+
+.cancel-text {
+    font-weight: 500;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .back-btn {
+        top: 15px;
+        left: 15px;
+        padding: 8px 12px;
+        font-size: 12px;
+    }
+
+    .back-icon {
+        font-size: 14px;
+    }
+
+    .back-text {
+        display: none; /* Скриваме текста на мобилни устройства */
+    }
+}
+
+/* Допълнителни стилове за по-добра визуализация */
+.login-header {
+    position: relative;
+    padding-top: 60px; /* Правим място за бутона "Назад" */
+}
+
+@media (max-width: 768px) {
+    .login-header {
+        padding-top: 50px;
+    }
+}
+.button-row {
+    display: flex;
+    gap: 12px; /* разстояние между бутоните */
+    justify-content: flex-start;
+    margin-top: 10px;
+}
+
+.form-actions {
+    margin-top: 0; /* Премахни празното разстояние, ако има */
+}
