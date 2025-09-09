@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Management - Schedule Management System</title>
+    <link rel="stylesheet" href="loginStyle.css">
+</head>
+<body>
+<!-- ОСНОВЕН КОНТЕЙНЕР -->
+<div class="login-container">
+    <!-- HEADER С ЛОГО И ЗАГЛАВИЕ -->
+    <div class="login-header">
+        <div class="login-logo"><img src="images/shopping.png" alt="App Logo"></div>
+        <h1>Account Management</h1>
+        <p>Schedule Management System</p>
+    </div>
+
+    <!-- СЪОБЩЕНИЯ ЗА УСПЕХ/ГРЕШКА -->
+    <div id="error-message" class="error-message" role="alert" style="display: none;">
+        <span id="error-text"></span>
+    </div>
+    <div id="success-message" class="success-message" role="alert" style="display: none;">
+        <span id="success-text"></span>
+    </div>
+
+    <!-- ТРИ БУТОНА В ЕДНА ЛИНИЯ -->
+    <div class="form-actions">
+        <div class="button-row">
+            <button type="button" class="login-btn" id="addAccountBtn">
+                ➕ Add account
+            </button>
+            <button type="button" class="login-btn" id="deleteAccountBtn">
+                ❌ Delete account
+            </button>
+            <button type="button" class="login-btn" id="editAccountBtn">
+                ✏️ Edit account
+            </button>
+        </div>
+        <!-- НАЗАД КЪМ НАЧАЛНАТА СТРАНИЦА -->
+        <div class="form-actions" style="margin-top: 30px;">
+            <a href="index.html" class="link-btn">← Back to Account Management</a>
+        </div>
+    </div>
+</div>
+
+<script>
+    /**
+ * ACCOUNT MANAGEMENT JAVASCRIPT
+ * Управлява действията на трите основни бутона
+ */
+
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 Account Management page loaded');
+
+    // Проверяваме дали потребителят е логнат
+    checkUserAuthentication();
+
+    // Настройваме event listeners за бутоните
+    setupButtonListeners();
+});
+
+/**
+ * ПРОВЕРКА ЗА АВТЕНТИФИКАЦИЯ
+ * Проверява дали потребителят е логнат преди да позволи достъп
+ */
+function checkUserAuthentication() {
+    const isLoggedIn = sessionStorage.getItem('isLoggedIn');
+    const currentUser = sessionStorage.getItem('currentUser');
+
+    console.log('🔍 Checking authentication - isLoggedIn:', isLoggedIn, 'currentUser exists:', !!currentUser);
+
+    if (!isLoggedIn || isLoggedIn !== 'true' || !currentUser) {
+        console.log('❌ User not authenticated, redirecting to login...');
+        showError('You must be logged in to access account management.');
+
+        setTimeout(() => {
+            window.location.href = 'login.html';
+        }, 2000);
+        return false;
+    }
+
+    try {
+        const userData = JSON.parse(currentUser);
+        console.log('✅ User authenticated:', userData.username);
+        console.log('🔍 User roles:', userData.roles);
+
+        // ГЪВКАВА ПРОВЕРКА ЗА АДМИНИСТРАТОРСКИ ПРАВА
+        // Проверяваме за различни варианти на admin роля
+        let isAdmin = false;
+
+        if (userData.roles && Array.isArray(userData.roles)) {
+            // Проверяваме за различни варианти на admin роля (case-insensitive)
+            isAdmin = userData.roles.some(role => {
+                const roleStr = String(role).toUpperCase();
+                return roleStr === 'ADMIN' || roleStr === 'ADMINISTRATOR' || roleStr === 'ROOT';
+            });
+
+            console.log('🔍 Admin check result:', isAdmin);
+            console.log('🔍 Available roles:', userData.roles.map(r => `"${r}"`));
+        } else {
+            console.log('❌ No roles array found in user data');
+
+            // ВРЕМЕННО РЕШЕНИЕ: Ако няма роли, но потребителят е логнат успешно,
+            // може би ролите не се зареждат правилно - позволяваме достъп за тестване
+            console.log('⚠️ TEMPORARY: Allowing access despite missing roles for debugging');
+
+            // Uncomment the line below to temporarily bypass role checking:
+            // isAdmin = true;
+        }
+
+        if (!isAdmin) {
+            console.log('❌ User is not admin, roles found:', userData.roles);
+
+            // ПОКАЗВАМЕ ДЕТАЙЛНА ИНФОРМАЦИЯ ЗА DEBUG
+            const roleDetails = userData.roles ?
+                userData.roles.map(r => `"${r}" (${typeof r})`).join(', ') :
+                'No roles found';
+
+            const debugMessage = `You need administrator privileges to access account management.\n\nDEBUG INFO:\nUsername: ${userData.username}\nRoles found: ${roleDetails}\nExpected: ADMIN, ADMINISTRATOR, or ROOT role`;
+
+            showError(debugMessage.replace(/\n/g, '<br>'));
+
+            // ВРЕМЕННО: Добавете бутон за bypass в съобщението за грешка
+            setTimeout(() => {
+                const errorDiv = document.getElementById('error-message');
+                if (errorDiv) {
+                    errorDiv.innerHTML += `
+                        <br><br>
+                        <button onclick="temporaryBypass()" style="padding: 8px 16px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                            🔧 Temporary Bypass (Development Only)
+                        </button>
+                        <button onclick="showDebugPage()" style="padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; margin-left: 8px;">
+                            🔍 Debug User Roles
+                        </button>
+                    `;
+                }
+            }, 1000);
+
+            setTimeout(() => {
+                // Не пренасочваме автоматично - оставяме потребителя да избере
+                // window.location.href = 'index.html';
+            }, 5000);
+            return false;
+        }
+
+        console.log('✅ Admin access confirmed');
+        return true;
+
+    } catch (error) {
+        console.error('❌ Error parsing user data:', error);
+        showError('Error validating user data. Please log in again.');
+        sessionStorage.clear();
+
+        setTimeout(() => {
+            window.location.href = 'login.html';
+        }, 2000);
+        return false;
+    }
+}
+
+/**
+ * ВРЕМЕННА ФУНКЦИЯ: Bypass admin check за development
+ */
+function temporaryBypass() {
+    console.log('🔧 Temporary bypass activated');
+    showSuccess('Bypassing admin check for development...');
+
+    setTimeout(() => {
+        window.location.href = '/editAccount.html';
+    }, 1000);
+}
+
+/**
+ * ПОКАЗВА DEBUG СТРАНИЦА ЗА РОЛИ
+ */
+function showDebugPage() {
+    console.log('🔍 Opening debug page');
+    window.open('/debug-roles.html', '_blank');
+}
+
+/**
+ * НАСТРОЙКА НА EVENT LISTENERS ЗА БУТОНИТЕ
+ */
+function setupButtonListeners() {
+    console.log('🎧 Setting up button listeners...');
+
+    // Add Account бутон
+    document.getElementById("addAccountBtn").addEventListener("click", handleAddAccount);
+
+    // Delete Account бутон
+    document.getElementById("deleteAccountBtn").addEventListener("click", handleDeleteAccount);
+
+    // Edit Account бутон
+    document.getElementById("editAccountBtn").addEventListener("click", handleEditAccount);
+
+    console.log('✅ Button listeners set up successfully');
+}
+
+/**
+ * ОБРАБОТЧИК ЗА ADD ACCOUNT БУТОН
+ * Пренасочва към регистрационната страница
+ */
+function handleAddAccount() {
+    console.log('➕ Add Account clicked');
+
+    try {
+        // Показваме loading съобщение
+        showSuccess('Redirecting to registration page...');
+
+        // Пренасочваме към регистрационната страница
+        setTimeout(() => {
+            window.location.href = '/registration.html';
+        }, 500);
+
+    } catch (error) {
+        console.error('❌ Error redirecting to registration:', error);
+        showError('Failed to redirect to registration page');
+    }
+}
+
+/**
+ * ОБРАБОТЧИК ЗА DELETE ACCOUNT БУТОН
+ * Показва съобщение че функционалността не е готова
+ */
+function handleDeleteAccount() {
+    console.log('❌ Delete Account clicked');
+
+    // За момента показваме placeholder съобщение
+    showError('Delete account functionality is coming soon!');
+
+    // TODO: Тук ще се имплементира delete функционалността
+}
+
+/**
+ * ОБРАБОТЧИК ЗА EDIT ACCOUNT БУТОН
+ * Пренасочва към страницата за редактиране на акаунти
+ */
+function handleEditAccount() {
+    console.log('✏️ Edit Account clicked');
+
+    try {
+        // Показваме loading съобщение
+        showSuccess('Loading edit account page...');
+
+        // Пренасочваме към страницата за редактиране
+        setTimeout(() => {
+            window.location.href = '/editAccount.html';
+        }, 500);
+
+    } catch (error) {
+        console.error('❌ Error redirecting to edit account:', error);
+        showError('Failed to load edit account page');
+    }
+}
+
+/**
+ * ПОКАЗВА СЪОБЩЕНИЕ ЗА ГРЕШКА
+ *
+ * @param {string} message - съобщението за грешка
+ */
+function showError(message) {
+    const errorDiv = document.getElementById('error-message');
+    const errorText = document.getElementById('error-text');
+
+    errorText.textContent = message;
+    errorDiv.style.display = 'block';
+
+    // Скриваме съобщението след 5 секунди
+    setTimeout(() => {
+        errorDiv.style.display = 'none';
+    }, 5000);
+
+    console.error('❌ Error shown to user:', message);
+}
+
+/**
+ * ПОКАЗВА СЪОБЩЕНИЕ ЗА УСПЕХ
+ *
+ * @param {string} message - съобщението за успех
+ */
+function showSuccess(message) {
+    const successDiv = document.getElementById('success-message');
+    const successText = document.getElementById('success-text');
+
+    successText.textContent = message;
+    successDiv.style.display = 'block';
+
+    // Скриваме съобщението след 3 секунди
+    setTimeout(() => {
+        successDiv.style.display = 'none';
+    }, 3000);
+
+    console.log('✅ Success shown to user:', message);
+}
+
+</script>
+</body>
+</html>

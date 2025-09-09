@@ -19,19 +19,19 @@
 
                         console.log('🆕 Registration button clicked - redirecting...');
 
-                        // Показваме loading състояние
+//                        // Показваме loading състояние
                         const originalHTML = registerBtn.innerHTML;
                         registerBtn.innerHTML = `
                             <span class="register-icon">⏳</span>
                             <span class="button-text">Зарежда...</span>
                         `;
-                        registerBtn.disabled = true;
-                        registerBtn.style.opacity = '0.7';
+//                        registerBtn.disabled = true;
+//                        registerBtn.style.opacity = '0.7';
 
                         // Редиректваме след кратка пауза
                         setTimeout(function() {
                             console.log('🔄 Redirecting to registration page...');
-                            window.location.href = 'http://localhost:8080/registration.html';
+                            window.location.href = 'http://localhost:8080/accountManagement.html';
                         }, 600);
                     });
 

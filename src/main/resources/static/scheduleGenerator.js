@@ -23,6 +23,11 @@ function initializeScheduleGenerator() {
     // СТЪПКА 3: Добавяме event listeners
     attachEventListeners();
 
+    // СТЪПКА 4: Инициализираме select елементите
+    setTimeout(() => {
+        initializeScheduleGeneratorSelects();
+    }, 100);
+
     console.log('✅ Модулът за генериране на график е инициализиран');
 }
 
@@ -96,20 +101,19 @@ function createScheduleGeneratorModal() {
                 </div>
 
                 <div class="generation-settings">
-                    <div class="form-group">
-                      <select id="generation-year" class="form-control" required>
-                        <option value="">Select year</option>
-                        <option value="${currentYear - 1}">${currentYear - 1}</option>
-                        <option value="${currentYear}">${currentYear}</option>
-                        <option value="${currentYear + 1}">${currentYear + 1}</option>
-                      </select>
-                      <label for="generation-year">Year</label>
+                    <!-- SELECT ЗА ГОДИНА -->
+                    <div class="form-group select-group">
+                        <select id="generation-year" class="form-select" required>
+                            <option value="" disabled selected>Select year</option>
+                        </select>
+                        <label for="generation-year" class="form-label">Year</label>
+                        <div class="field-error" id="generation-year-error" style="display: none;"></div>
                     </div>
 
-
-                    <div class="form-group">
-                        <label for="generation-month">Month:</label>
-                        <select id="generation-month" class="form-control">
+                    <!-- SELECT ЗА МЕСЕЦ -->
+                    <div class="form-group select-group">
+                        <select id="generation-month" class="form-select" required>
+                            <option value="" disabled selected>Select month</option>
                             <option value="1">January</option>
                             <option value="2">February</option>
                             <option value="3">March</option>
@@ -123,6 +127,8 @@ function createScheduleGeneratorModal() {
                             <option value="11">November</option>
                             <option value="12">December</option>
                         </select>
+                        <label for="generation-month" class="form-label">Month</label>
+                        <div class="field-error" id="generation-month-error" style="display: none;"></div>
                     </div>
 
                     <div class="suggested-options">
@@ -155,7 +161,118 @@ function createScheduleGeneratorModal() {
     scheduleGeneratorModal = modal;
 
     // Задаваме по подразбиране следващия месец
-    setGenerationDate(nextMonthYear, nextMonth);
+    //setGenerationDate(nextMonthYear, nextMonth);
+}
+
+/**
+ * НОВА ФУНКЦИЯ: Инициализира select елементите в modal-а
+ */
+function initializeScheduleGeneratorSelects() {
+    console.log('📅 Initializing schedule generator selects...');
+
+    // Попълваме година select-а
+    populateYearSelectForGenerator();
+
+    // Настройваме label поведението
+    setupSelectValidationForGenerator();
+
+    console.log('✅ Schedule generator selects initialized');
+}
+
+/**
+ * НОВА ФУНКЦИЯ: Попълва select-а за години
+ */
+function populateYearSelectForGenerator() {
+    const yearSelect = document.getElementById('generation-year');
+
+    if (!yearSelect) {
+        console.warn('⚠️ Year select element not found in modal');
+        return;
+    }
+
+    // Текущата година
+    const currentYear = new Date().getFullYear();
+
+    // Генерираме години от текущата до 3 години напред
+    const startYear = currentYear;
+    const endYear = currentYear + 3;
+
+    // Изчистваме съществуващите опции (освен първата)
+    while (yearSelect.children.length > 1) {
+        yearSelect.removeChild(yearSelect.lastChild);
+    }
+
+    // Добавяме новите години
+    for (let year = startYear; year <= endYear; year++) {
+        const option = document.createElement('option');
+        option.value = year;
+        option.textContent = year;
+        yearSelect.appendChild(option);
+    }
+
+    console.log(`✅ Generated years from ${startYear} to ${endYear} for generator`);
+}
+
+/**
+ * НОВА ФУНКЦИЯ: Настройва валидация за select елементите в modal-а
+ */
+function setupSelectValidationForGenerator() {
+    const yearSelect = document.getElementById('generation-year');
+    const monthSelect = document.getElementById('generation-month');
+
+    // Year select validation
+    if (yearSelect) {
+        setupSelectLabelForGenerator(yearSelect);
+    }
+
+    // Month select validation
+    if (monthSelect) {
+        setupSelectLabelForGenerator(monthSelect);
+    }
+}
+
+/**
+ * НОВА ФУНКЦИЯ: Настройва отделен select елемент в modal-а
+ */
+function setupSelectLabelForGenerator(selectElement) {
+    if (!selectElement) return;
+
+    const selectId = selectElement.id;
+    console.log(`🔧 Setting up generator select: ${selectId}`);
+
+    // Функция за обновяване на label
+    function updateLabel() {
+        const parentGroup = selectElement.closest('.form-group.select-group');
+        const label = parentGroup ? parentGroup.querySelector('.form-label') : null;
+
+        if (label) {
+            const hasValue = selectElement.value && selectElement.value !== '';
+            const isFocused = document.activeElement === selectElement;
+
+            if (hasValue || isFocused) {
+                label.classList.add('active');
+                parentGroup.setAttribute('data-has-value', 'true');
+                console.log(`⬆️ Generator ${selectId} label raised`);
+            } else {
+                label.classList.remove('active');
+                parentGroup.setAttribute('data-has-value', 'false');
+                console.log(`⬇️ Generator ${selectId} label lowered`);
+            }
+        }
+    }
+
+    // Проверяваме началното състояние
+    updateLabel();
+
+    // Event listeners
+    selectElement.addEventListener('change', function() {
+        console.log(`🔄 Generator ${this.id} changed to: "${this.value}"`);
+        updateLabel();
+        hideFieldError(selectId);
+    });
+
+    selectElement.addEventListener('focus', updateLabel);
+    selectElement.addEventListener('blur', () => setTimeout(updateLabel, 100));
 }
 
 /**
@@ -191,6 +308,11 @@ function showScheduleGeneratorModal() {
         setTimeout(() => {
             scheduleGeneratorModal.classList.add('show');
         }, 10);
+
+        // Обновяваме select елементите след показването
+        setTimeout(() => {
+            initializeScheduleGeneratorSelects();
+        }, 100);
     }
 }
 
@@ -220,6 +342,14 @@ function setGenerationDate(year, month) {
     if (yearSelect && monthSelect) {
         yearSelect.value = year;
         monthSelect.value = month;
+
+        // Обновяваме label-ите
+        setTimeout(() => {
+            if (typeof setupSelectLabelForGenerator === 'function') {
+                setupSelectLabelForGenerator(yearSelect);
+                setupSelectLabelForGenerator(monthSelect);
+            }
+        }, 100);
 
         console.log(`📅 Зададена дата за генериране: ${month}/${year}`);
     }
@@ -282,7 +412,6 @@ async function startScheduleGeneration() {
                  }, 1000);
              }
 
-             // ДОБАВИ ТЕЗИ РЕДОВЕ:
              // Обновяваме седмичните данни за избрания служител (ако има такъв)
             const selectedEmployeeSelect = document.getElementById('employeeSelect');
             if (selectedEmployeeSelect && selectedEmployeeSelect.value && typeof loadAndShowWeeklySchedule === 'function') {
@@ -294,7 +423,7 @@ async function startScheduleGeneration() {
                 setTimeout(() => {
                     console.log('📊 Calling loadAndShowWeeklySchedule to refresh sidebar data...');
                     loadAndShowWeeklySchedule(selectedEmployeeId, selectedEmployeeName);
-                }, 2000); // Изчакваме 2 секунди за да се обнови календарът първо
+                }, 2000);
             }
 
         } else {
@@ -414,6 +543,37 @@ function refreshCalendar() {
         setTimeout(() => {
             window.location.reload();
         }, 2000);
+    }
+}
+
+/**
+ * Показва грешка за конкретно поле
+ */
+function showFieldError(fieldId, message) {
+    const errorElement = document.getElementById(fieldId + '-error');
+    const fieldElement = document.getElementById(fieldId);
+
+    if (errorElement && fieldElement) {
+        errorElement.textContent = message;
+        errorElement.style.display = 'block';
+        errorElement.classList.add('show');
+        fieldElement.classList.add('error');
+        console.log(`❌ Error shown for ${fieldId}: ${message}`);
+    }
+}
+
+/**
+ * Скрива грешката за конкретно поле
+ */
+function hideFieldError(fieldId) {
+    const errorElement = document.getElementById(fieldId + '-error');
+    const fieldElement = document.getElementById(fieldId);
+
+    if (errorElement && fieldElement) {
+        errorElement.style.display = 'none';
+        errorElement.classList.remove('show');
+        fieldElement.classList.remove('error');
+        console.log(`✅ Error hidden for ${fieldId}`);
     }
 }
 

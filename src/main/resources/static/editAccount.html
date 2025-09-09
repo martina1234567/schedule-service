@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Account - Schedule Management System</title>
+    <link rel="stylesheet" href="loginStyle.css">
+</head>
+<body>
+<!-- ОСНОВЕН КОНТЕЙНЕР -->
+<div class="login-container">
+    <!-- HEADER С ЛОГО И ЗАГЛАВИЕ -->
+    <div class="login-header">
+        <div class="login-logo"><img src="images/shopping.png" alt="App Logo"></div>
+        <h1>Edit Account</h1>
+        <p>Schedule Management System</p>
+    </div>
+
+    <!-- СЪОБЩЕНИЯ ЗА УСПЕХ/ГРЕШКА -->
+    <div id="error-message" class="error-message" role="alert" style="display: none;">
+        <span id="error-text"></span>
+    </div>
+    <div id="success-message" class="success-message" role="alert" style="display: none;">
+        <span id="success-text"></span>
+    </div>
+
+    <!-- LOADING ИНДИКАТОР -->
+    <div id="loading-indicator" class="loading-indicator" style="display: none;">
+        <p>Loading users...</p>
+    </div>
+
+    <!-- СПИСЪК СЪС СЛУЖИТЕЛИ ЗА РЕДАКТИРАНЕ -->
+    <div id="users-list-container" style="display: none;">
+        <h3 style="margin-bottom: 20px; color: #333; text-align: center;">Select User to Edit</h3>
+
+        <!-- ТЪРСЕНЕ И ФИЛТРИРАНЕ -->
+        <div class="form-group" style="margin-bottom: 20px;">
+            <input type="text" id="search-input" class="form-input" placeholder=" " autocomplete="off">
+            <label for="search-input" class="form-label">Search by name or username...</label>
+        </div>
+
+        <!-- СПИСЪК СЪС СЛУЖИТЕЛИ -->
+        <div id="users-list" class="users-list">
+            <!-- Тук ще се зарежда списъкът със служители -->
+        </div>
+    </div>
+
+    <!-- ФОРМА ЗА РЕДАКТИРАНЕ -->
+    <div id="edit-form-container" style="display: none;">
+        <h3 id="edit-form-title" style="margin-bottom: 20px; color: #333; text-align: center;">Edit User Account</h3>
+
+        <form id="edit-user-form">
+            <!-- СКРИТО ПОЛЕ ЗА USER ID -->
+            <input type="hidden" id="edit-user-id">
+
+            <!-- USERNAME ПОЛЕ -->
+            <div class="form-group">
+                <input type="text" id="edit-username" class="form-input" placeholder=" " required autocomplete="username">
+                <label for="edit-username" class="form-label">Username</label>
+                <span class="field-error" id="username-error"></span>
+            </div>
+
+            <!-- PASSWORD ПОЛЕ -->
+            <div class="form-group">
+                <input type="password" id="edit-password" class="form-input" placeholder=" " autocomplete="new-password">
+                <label for="edit-password" class="form-label">New Password (leave empty to keep current)</label>
+                <span class="field-error" id="password-error"></span>
+                <span class="field-help">Minimum 4 characters. Leave empty to keep current password.</span>
+            </div>
+
+            <!-- CONFIRM PASSWORD ПОЛЕ -->
+            <div class="form-group">
+                <input type="password" id="edit-confirm-password" class="form-input" placeholder=" " autocomplete="new-password">
+                <label for="edit-confirm-password" class="form-label">Confirm New Password</label>
+                <span class="field-error" id="confirm-password-error"></span>
+                <span class="field-help">Must match the password above if changing password.</span>
+            </div>
+
+            <!-- IS ACTIVE SELECT -->
+            <div class="form-group select-group">
+                <select id="edit-is-active" class="form-select" required>
+                    <option value="" disabled selected>Select access status...</option>
+                    <option value="true">Yes - Has access</option>
+                    <option value="false">No - Access denied</option>
+                </select>
+                <label for="edit-is-active" class="form-label">Account Access</label>
+                <span class="field-error" id="active-error"></span>
+            </div>
+
+            <!-- БУТОНИ ЗА ДЕЙСТВИЯ -->
+            <div class="form-actions">
+                <button type="submit" class="submit-btn" id="save-changes-btn">
+                    <span class="btn-text">Save Changes</span>
+                    <span class="btn-loading" style="display: none;">Saving...</span>
+                </button>
+
+                <button type="button" class="link-btn" id="cancel-edit-btn"
+                        style="margin-top: 12px; background: #6c757d; color: white; padding: 10px 20px; border-radius: 6px;">
+                    Cancel
+                </button>
+
+                <button type="button" class="link-btn" id="back-to-list-btn"
+                        style="margin-top: 8px; color: #007bff;">
+                    ← Back to Users List
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- НАЗАД КЪМ ACCOUNT MANAGEMENT -->
+    <div class="form-actions" style="margin-top: 30px;">
+        <a href="accountManagement.html" class="link-btn">← Back to Account Management</a>
+    </div>
+</div>
+
+<script>
+    // ===============================
+    // ГЛОБАЛНИ ПРОМЕНЛИВИ
+    // ===============================
+
+    let allUsers = []; // Всички потребители от сървъра
+    let filteredUsers = []; // Филтрирани потребители за показване
+    let currentUserData = null; // Данни за текущо логнатия потребител
+    let currentEditingUserId = null; // ID на потребителя който се редактира
+
+    // ===============================
+    // ИНИЦИАЛИЗАЦИЯ НА СТРАНИЦАТА
+    // ===============================
+
+    /**
+     * Стартира приложението при зареждане на страницата
+     */
+    document.addEventListener('DOMContentLoaded', async function() {
+        console.log('🚀 Edit Account page loaded');
+
+        try {
+            // СТЪПКА 1: Получаваме информация за текущо логнатия потребител
+            await loadCurrentUser();
+
+            // СТЪПКА 2: Зареждаме всички потребители
+            await loadAllUsers();
+
+            // СТЪПКА 3: Показваме списъка със служители
+            showUsersList();
+
+            // СТЪПКА 4: Настройваме event listeners
+            setupEventListeners();
+
+        } catch (error) {
+            console.error('❌ Error initializing edit account page:', error);
+            showError('Failed to load page. Please try again.');
+        }
+    });
+
+    // ===============================
+    // ЗАРЕЖДАНЕ НА ДАННИ
+    // ===============================
+
+    /**
+     * Зарежда информация за текущо логнатия потребител
+     */
+    async function loadCurrentUser() {
+        try {
+            console.log('👤 Loading current user...');
+
+            // Проверяваме дали потребителят е логнат
+            const isLoggedIn = sessionStorage.getItem('isLoggedIn');
+            const currentUserSessionData = sessionStorage.getItem('currentUser');
+
+            if (!isLoggedIn || isLoggedIn !== 'true' || !currentUserSessionData) {
+                console.log('❌ User not logged in, redirecting to login...');
+                window.location.href = 'login.html';
+                return;
+            }
+
+            // Парсваме данните от session storage
+            currentUserData = JSON.parse(currentUserSessionData);
+            console.log('✅ Current user loaded:', currentUserData.username, '(ID:', currentUserData.id + ')');
+
+        } catch (error) {
+            console.error('❌ Error loading current user:', error);
+            window.location.href = 'login.html';
+        }
+    }
+
+    /**
+     * Зарежда всички потребители от сървъра
+     */
+    async function loadAllUsers() {
+        try {
+            console.log('📋 Loading all users...');
+            showLoading(true);
+
+            const response = await fetch('/api/users/all', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            console.log('📋 Users API Response:', data);
+
+            if (data.success && Array.isArray(data.data)) {
+                allUsers = data.data;
+                filteredUsers = [...allUsers]; // Копираме всички потребители в филтрираните
+                console.log(`✅ Loaded ${allUsers.length} users successfully`);
+            } else {
+                throw new Error(data.message || 'Invalid response format');
+            }
+
+        } catch (error) {
+            console.error('❌ Error loading users:', error);
+            showError('Failed to load users: ' + error.message);
+            allUsers = [];
+            filteredUsers = [];
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    // ===============================
+    // UI DISPLAY FUNCTIONS
+    // ===============================
+
+    /**
+     * Показва списъка със служители за редактиране
+     */
+    function showUsersList() {
+        console.log('📋 Showing users list...');
+
+        // Скриваме другите секции
+        document.getElementById('loading-indicator').style.display = 'none';
+        document.getElementById('edit-form-container').style.display = 'none';
+
+        // Показваме списъка
+        document.getElementById('users-list-container').style.display = 'block';
+
+        // Рендваме списъка
+        renderUsersList();
+    }
+
+    /**
+     * Рендва списъка със потребители в HTML
+     */
+    function renderUsersList() {
+        const container = document.getElementById('users-list');
+
+        if (filteredUsers.length === 0) {
+            container.innerHTML = `
+                <div style="text-align: center; padding: 40px; color: #666; font-style: italic;">
+                    👤 No users found
+                </div>
+            `;
+            return;
+        }
+
+        let html = '';
+
+        filteredUsers.forEach(user => {
+            // Не показваме собствения профил
+            const isCurrentUser = user.id === currentUserData.id;
+            if (isCurrentUser) return;
+
+            // Определяме статуса на акаунта
+            const accessStatus = user.isActive ? '✅ Has access' : '❌ No access';
+            const statusClass = user.isActive ? 'status-active' : 'status-inactive';
+
+            html += `
+                <div class="user-card" data-user-id="${user.id}">
+                    <div class="user-info">
+                        <h4 class="user-name">${user.employeeName || 'Unknown Employee'}</h4>
+                        <p class="user-username">@${user.username}</p>
+                        <p class="user-status ${statusClass}">${accessStatus}</p>
+                    </div>
+                    <div class="user-actions">
+                        <button type="button" class="edit-user-btn" data-user-id="${user.id}">
+                            ✏️ Edit
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
+
+        container.innerHTML = html;
+
+        console.log(`✅ Rendered ${filteredUsers.length} users (excluding current user)`);
+    }
+
+    /**
+     * Показва формата за редактиране на потребител
+     */
+    function showEditForm(userId) {
+        console.log('✏️ Showing edit form for user ID:', userId);
+
+        const user = allUsers.find(u => u.id === userId);
+        if (!user) {
+            console.error('❌ User not found with ID:', userId);
+            showError('User not found');
+            return;
+        }
+
+        // Запазваме ID на редактирания потребител
+        currentEditingUserId = userId;
+
+        // Скриваме списъка
+        document.getElementById('users-list-container').style.display = 'none';
+
+        // Показваме формата
+        document.getElementById('edit-form-container').style.display = 'block';
+
+        // Попълваме данните
+        populateEditForm(user);
+
+        // Обновяваме заглавието
+        document.getElementById('edit-form-title').textContent =
+            `Edit Account: ${user.employeeName || user.username}`;
+    }
+
+    /**
+     * Попълва формата за редактиране с данните на потребителя
+     */
+    function populateEditForm(user) {
+        console.log('📝 Populating edit form with user data:', user);
+
+        // Попълваме полетата
+        document.getElementById('edit-user-id').value = user.id;
+        document.getElementById('edit-username').value = user.username || '';
+        document.getElementById('edit-password').value = ''; // Винаги празно за сигурност
+        document.getElementById('edit-confirm-password').value = ''; // Винаги празно за сигурност
+
+        // Active status dropdown
+        const activeSelect = document.getElementById('edit-is-active');
+        activeSelect.value = user.isActive ? 'true' : 'false';
+
+        console.log('✅ Form populated successfully');
+    }
+
+    // ===============================
+    // EVENT LISTENERS
+    // ===============================
+
+    /**
+     * Настройва всички event listeners
+     */
+    function setupEventListeners() {
+        console.log('🎧 Setting up event listeners...');
+
+        // Търсене в списъка
+        document.getElementById('search-input').addEventListener('input', handleSearch);
+
+        // Edit бутони (делегиране на събития)
+        document.getElementById('users-list').addEventListener('click', handleUserListClick);
+
+        // Форма за редактиране
+        document.getElementById('edit-user-form').addEventListener('submit', handleEditSubmit);
+
+        // Cancel и Back бутони
+        document.getElementById('cancel-edit-btn').addEventListener('click', showUsersList);
+        document.getElementById('back-to-list-btn').addEventListener('click', showUsersList);
+
+        console.log('✅ Event listeners set up successfully');
+    }
+
+    /**
+     * Обработва търсенето в списъка
+     */
+    function handleSearch(event) {
+        const query = event.target.value.toLowerCase().trim();
+        console.log('🔍 Searching for:', query);
+
+        if (query === '') {
+            // Показваме всички потребители
+            filteredUsers = [...allUsers];
+        } else {
+            // Филтрираме по име на служител и потребителско име
+            filteredUsers = allUsers.filter(user => {
+                const employeeName = (user.employeeName || '').toLowerCase();
+                const username = (user.username || '').toLowerCase();
+                return employeeName.includes(query) || username.includes(query);
+            });
+        }
+
+        console.log(`🔍 Found ${filteredUsers.length} matching users`);
+        renderUsersList();
+    }
+
+    /**
+     * Обработва кликване в списъка с потребители
+     */
+    function handleUserListClick(event) {
+        const editBtn = event.target.closest('.edit-user-btn');
+        if (editBtn) {
+            const userId = parseInt(editBtn.getAttribute('data-user-id'));
+            console.log('🖱️ Edit clicked for user ID:', userId);
+            showEditForm(userId);
+        }
+    }
+
+    /**
+     * Обработва изпращането на формата за редактиране
+     */
+    async function handleEditSubmit(event) {
+        event.preventDefault();
+        console.log('📝 Form submitted for editing user');
+
+        try {
+            // Събираме данните от формата
+            const formData = collectFormData();
+
+            // Валидираме данните
+            if (!validateFormData(formData)) {
+                return; // Валидацията неуспешна
+            }
+
+            // Изпращаме заявката
+            await submitEditUser(formData);
+
+        } catch (error) {
+            console.error('❌ Error submitting edit form:', error);
+            showError('Failed to save changes: ' + error.message);
+        }
+    }
+
+    // ===============================
+    // FORM HANDLING
+    // ===============================
+
+    /**
+     * Събира данните от формата
+     */
+    function collectFormData() {
+        return {
+            id: parseInt(document.getElementById('edit-user-id').value),
+            username: document.getElementById('edit-username').value.trim(),
+            password: document.getElementById('edit-password').value.trim(),
+            confirmPassword: document.getElementById('edit-confirm-password').value.trim(),
+            isActive: document.getElementById('edit-is-active').value === 'true'
+        };
+    }
+
+    /**
+     * Валидира данните от формата
+     */
+    function validateFormData(formData) {
+    let isValid = true;
+
+    // Изчистваме предишните грешки
+    clearFieldErrors();
+
+    // Валидиране на username
+    if (!formData.username) {
+        showFieldError('username-error', 'Username is required');
+        isValid = false;
+    } else if (formData.username.length < 3) {
+        showFieldError('username-error', 'Username must be at least 3 characters');
+        isValid = false;
+    }
+
+    // Валидиране на password и confirmPassword
+    if (formData.password && formData.password.length > 0) {
+        // Ако се въвежда парола, проверяваме дължината
+        if (formData.password.length < 4) {
+            showFieldError('password-error', 'Password must be at least 4 characters');
+            isValid = false;
+        }
+
+        // Проверяваме дали confirm password съвпада
+        if (formData.password !== formData.confirmPassword) {
+            showFieldError('confirm-password-error', 'Passwords do not match');
+            isValid = false;
+        }
+    } else if (formData.confirmPassword && formData.confirmPassword.length > 0) {
+        // Ако е въведена само confirm password без главната парола
+        showFieldError('password-error', 'Please enter the new password first');
+        showFieldError('confirm-password-error', 'Password confirmation requires a password');
+        isValid = false;
+    }
+
+    // ПОПРАВКА: employeeId вече не е задължително при редактиране
+    // При редактиране, ако не се избере нов служител, остава старият
+
+    console.log(isValid ? '✅ Form validation passed' : '❌ Form validation failed');
+    return isValid;
+}
+    /**
+     * Изпраща заявката за редактиране на потребител
+     */
+    async function submitEditUser(formData) {
+    console.log('📤 Submitting edit user request:', formData);
+
+    // Показваме loading състояние
+    showSubmitLoading(true);
+
+    try {
+        // Подготвяме данните за изпращане
+        const submitData = {
+            id: formData.id,
+            username: formData.username,
+            isActive: formData.isActive
+        };
+
+        // ПОПРАВКА: Добавяме employeeId само ако съществува и е валидно
+        // Ако не е подадено, сървърът ще използва съществуващото
+        if (formData.employeeId && formData.employeeId > 0) {
+            submitData.employeeId = formData.employeeId;
+        }
+
+        // Добавяме парола само ако е въведена
+        if (formData.password && formData.password.length > 0) {
+            submitData.password = formData.password;
+        }
+
+        console.log('📤 Final submit data:', submitData);
+
+        const response = await fetch(`/api/users/update/${formData.id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(submitData)
+        });
+
+        const data = await response.json();
+        console.log('📤 Update API Response:', data);
+
+        if (data.success) {
+            console.log('✅ User updated successfully');
+            showSuccess('User account updated successfully!');
+
+            // Презареждаме списъка със служители
+            await loadAllUsers();
+
+            // Връщаме се към списъка
+            setTimeout(() => {
+                showUsersList();
+            }, 1500);
+
+        } else {
+            throw new Error(data.message || 'Failed to update user');
+        }
+
+    } catch (error) {
+        console.error('❌ Error updating user:', error);
+        showError('Failed to update user: ' + error.message);
+    } finally {
+        showSubmitLoading(false);
+    }
+}
+/**
+ * Извлича данните от формата за редактиране
+ * ПОПРАВКА: По-добро обработване на employeeId
+ */
+function getEditFormData() {
+    const employeeSelect = document.getElementById('edit-employee-id');
+    const employeeId = employeeSelect ? employeeSelect.value : null;
+
+    return {
+        id: document.getElementById('edit-user-id').value,
+        username: document.getElementById('edit-username').value.trim(),
+        employeeId: employeeId && employeeId !== '' ? parseInt(employeeId) : null,
+        password: document.getElementById('edit-password').value.trim(),
+        confirmPassword: document.getElementById('edit-confirm-password').value.trim(),
+        isActive: document.getElementById('edit-is-active').value === 'true'
+    };
+}
+
+
+    // ===============================
+    // UI UTILITY FUNCTIONS
+    // ===============================
+
+    /**
+     * Показва/скрива loading индикатор
+     */
+    function showLoading(show) {
+        document.getElementById('loading-indicator').style.display = show ? 'block' : 'none';
+    }
+
+    /**
+     * Показва/скрива loading състояние на submit бутона
+     */
+    function showSubmitLoading(show) {
+        const btn = document.getElementById('save-changes-btn');
+        const textSpan = btn.querySelector('.btn-text');
+        const loadingSpan = btn.querySelector('.btn-loading');
+
+        if (show) {
+            btn.disabled = true;
+            textSpan.style.display = 'none';
+            loadingSpan.style.display = 'inline';
+        } else {
+            btn.disabled = false;
+            textSpan.style.display = 'inline';
+            loadingSpan.style.display = 'none';
+        }
+    }
+
+    /**
+     * Показва съобщение за грешка
+     */
+    function showError(message) {
+        const errorDiv = document.getElementById('error-message');
+        const errorText = document.getElementById('error-text');
+
+        errorText.textContent = message;
+        errorDiv.style.display = 'block';
+
+        // Скрий след 5 секунди
+        setTimeout(() => {
+            errorDiv.style.display = 'none';
+        }, 5000);
+
+        console.error('❌ Error shown to user:', message);
+    }
+
+    /**
+     * Показва съобщение за успех
+     */
+    function showSuccess(message) {
+        const successDiv = document.getElementById('success-message');
+        const successText = document.getElementById('success-text');
+
+        successText.textContent = message;
+        successDiv.style.display = 'block';
+
+        // Скрий след 3 секунди
+        setTimeout(() => {
+            successDiv.style.display = 'none';
+        }, 3000);
+
+        console.log('✅ Success shown to user:', message);
+    }
+
+    /**
+     * Показва грешка за конкретно поле
+     */
+    function showFieldError(fieldId, message) {
+        const errorSpan = document.getElementById(fieldId);
+        if (errorSpan) {
+            errorSpan.textContent = message;
+            errorSpan.style.display = 'block';
+        }
+    }
+
+    /**
+     * Изчистване на всички field errors
+     */
+    function clearFieldErrors() {
+        const errorSpans = document.querySelectorAll('.field-error');
+        errorSpans.forEach(span => {
+            span.textContent = '';
+            span.style.display = 'none';
+        });
+    }
+</script>
+
+<style>
+    /* ===============================
+       STYLES FOR EDIT ACCOUNT PAGE
+       =============================== */
+
+    /* Loading индикатор */
+    .loading-indicator {
+        text-align: center;
+        padding: 40px;
+        color: #666;
+        font-style: italic;
+    }
+
+    .loading-indicator::before {
+        content: "⏳ ";
+        font-size: 18px;
+    }
+
+    /* Users List стилове */
+    .users-list {
+        max-height: 400px;
+        overflow-y: auto;
+        border: 1px solid #e1e5e9;
+        border-radius: 8px;
+        padding: 10px;
+    }
+
+    .user-card {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px;
+        border: 1px solid #e1e5e9;
+        border-radius: 8px;
+        margin-bottom: 12px;
+        background: white;
+        transition: all 0.2s ease;
+    }
+
+    .user-card:hover {
+        border-color: #007bff;
+        box-shadow: 0 2px 8px rgba(0, 123, 255, 0.1);
+    }
+
+    .user-info h4.user-name {
+        margin: 0 0 4px 0;
+        color: #333;
+        font-size: 16px;
+        font-weight: 600;
+    }
+
+    .user-info p {
+        margin: 0;
+        font-size: 14px;
+    }
+
+    .user-username {
+        color: #666;
+        font-style: italic;
+    }
+
+    .user-status {
+        font-weight: 500;
+        font-size: 13px;
+    }
+
+    .status-active {
+        color: #28a745;
+    }
+
+    .status-inactive {
+        color: #dc3545;
+    }
+
+    .edit-user-btn {
+        background: linear-gradient(135deg, #007bff, #0056b3);
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .edit-user-btn:hover {
+        background: linear-gradient(135deg, #0056b3, #004085);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+    }
+
+    /* Form стилове */
+    .field-help {
+        display: block;
+        margin-top: 4px;
+        font-size: 12px;
+        color: #666;
+        line-height: 1.3;
+    }
+
+    .field-error {
+        display: none;
+        margin-top: 4px;
+        font-size: 12px;
+        color: #dc3545;
+        line-height: 1.3;
+    }
+
+    /* Responsive дизайн */
+    @media (max-width: 768px) {
+        .user-card {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .user-actions {
+            width: 100%;
+            text-align: right;
+        }
+
+        .edit-user-btn {
+            width: 100%;
+        }
+    }
+
+</style>
+</body>
+</html>

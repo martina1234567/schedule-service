@@ -433,4 +433,186 @@
   font-size: 12px;
   color: #667eea;
 }
+/**
+ * FORM-SELECT СТИЛОВЕ
+ * Стилове за select елементите със стил като employeeSelect
+ */
+
+/* Основни стилове за form-select */
+.form-select {
+    width: 100%;
+    padding: 16px 12px 12px;
+    font-size: 16px;
+    border-radius: 8px;
+    border: 2px solid #A6CDFF;
+    background-color: #f3faff;
+    color: #333;
+    outline: none;
+    transition: all 0.3s ease;
+    appearance: none;
+    cursor: pointer;
+    box-sizing: border-box;
+}
+
+/* Focus състояние */
+.form-select:focus {
+    border-color: #6fa3e8;
+    background-color: #e6f1ff;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* Hover ефект */
+.form-select:hover:not(:focus) {
+    border-color: #9bc5ff;
+    background-color: #f8fcff;
+}
+
+/* Error състояние */
+.form-select.error {
+    border-color: #dc3545;
+    background-color: #fff5f5;
+}
+
+.form-select.error:focus {
+    border-color: #dc3545;
+    box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
+}
+
+/* Disabled състояние */
+.form-select:disabled {
+    background-color: #f8f9fa;
+    color: #6c757d;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+/* Option стилове */
+.form-select option {
+    padding: 10px;
+    background-color: white;
+    color: #333;
+}
+
+.form-select option:disabled {
+    color: #999;
+    font-style: italic;
+}
+
+.form-select option:checked {
+    background-color: #007bff;
+    color: white;
+}
+
+/* Select group wrapper */
+.form-group.select-group {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+/* Dropdown стрелка */
+.form-group.select-group::after {
+    content: "▼";
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #666;
+    pointer-events: none;
+    font-size: 12px;
+    transition: transform 0.3s ease;
+}
+
+/* Обръщаме стрелката при focus */
+.form-group.select-group:focus-within::after {
+    transform: translateY(-50%) rotate(180deg);
+}
+
+/* Label стилове */
+.form-label {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 14px;
+    color: #666;
+    pointer-events: none;
+    transition: all 0.3s ease-in-out;
+    background-color: #f3faff;
+    padding: 0 5px;
+    z-index: 1;
+}
+
+/* Активен label (когато има избрана стойност или focus) */
+.form-select:focus + .form-label,
+.form-select:not([value=""]) + .form-label,
+.form-label.active {
+    top: 0;
+    font-size: 12px;
+    color: #4d80e1;
+    padding: 0 5px;
+    background-color: #f3faff;
+}
+
+/* Error message стилове */
+.field-error {
+    color: #dc3545;
+    font-size: 12px;
+    margin-top: 5px;
+    display: none;
+    animation: fadeIn 0.3s ease;
+}
+
+.field-error.show {
+    display: block;
+}
+
+/* Loading състояние */
+.form-select.loading {
+    background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICAgIDxjaXJjbGUgY3g9IjEwIiBjeT0iMTAiIHI9IjMiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzY2NiIgc3Ryb2tlLXdpZHRoPSIyIj4KICAgICAgICA8YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIHR5cGU9InJvdGF0ZSIgdmFsdWVzPSIwIDEwIDEwOzM2MCAxMCAxMCIgZHVyPSIxcyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KICAgIDwvY2lyY2xlPgo8L3N2Zz4K');
+    background-repeat: no-repeat;
+    background-position: right 15px center;
+    background-size: 16px;
+}
+
+/* Анимации */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .form-select {
+        font-size: 14px;
+        padding: 14px 10px 10px;
+    }
+
+    .form-label {
+        font-size: 13px;
+    }
+
+    .form-select:focus + .form-label,
+    .form-select:not([value=""]) + .form-label,
+    .form-label.active {
+        font-size: 11px;
+    }
+}
+
+@media (max-width: 480px) {
+    .form-select {
+        font-size: 13px;
+        padding: 12px 8px 8px;
+    }
+
+    .form-group.select-group::after {
+        right: 12px;
+        font-size: 10px;
+    }
+}
 

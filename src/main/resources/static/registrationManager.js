@@ -511,7 +511,7 @@
         // Редиректваме
         setTimeout(() => {
             console.log('🔄 Redirecting back to index.html');
-            window.location.href = 'http://localhost:8080/index.html';
+            window.location.href = 'http://localhost:8080/accountManagement.html';
         }, 500);
     }
 

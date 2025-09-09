@@ -324,4 +324,31 @@ public interface UserRepository extends JpaRepository<User, Long> {
      */
     @Query("SELECT u FROM User u WHERE u.username = :username AND u.isActive = true")
     Optional<User> findActiveUserByUsername(@Param("username") String username);
+
+    // ===============================
+// ДОПЪЛНИТЕЛНИ МЕТОДИ ЗА USERREPOSITORY.JAVA
+// Тези методи трябва да се добавят в съществуващия UserRepository интерфейс
+// ===============================
+
+    /**
+     * БРОЙ ПОТРЕБИТЕЛИ ПО АКТИВЕН СТАТУС
+     *
+     * @param isActive активен статус
+     * @return брой потребители с този статус
+     */
+    long countByIsActive(Boolean isActive);
+
+    /**
+     * НАМИРА ПОТРЕБИТЕЛ ПО EMPLOYEE ID
+     *
+     * @param employeeId ID на служителя
+     * @return Optional<User> - потребителя ако съществува
+     */
+    @Query("SELECT u FROM User u WHERE u.employee.id = :employeeId")
+    Optional<User> findByEmployee_Id(@Param("employeeId") Long employeeId);
+
+// ===============================
+// ЗАБЕЛЕЖКА: Тези методи трябва да се добавят в UserRepository.java
+// в съществуващия интерфейс заедно с другите методи
+// ===============================
 }
