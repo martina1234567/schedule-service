@@ -615,5 +615,81 @@ public class AuthService {
         System.out.println("❌ Access denied: No valid role found");
         return false;
     }
+    /**
+     * ДОБАВЕТЕ ТОЗИ МЕТОД КЪМ AuthService.java
+     * Поставете го в края на класа, преди последната фигурна скоба
+     */
+
+    /**
+     * ИЗТРИВА ПОТРЕБИТЕЛ ПО ID
+     *
+     * Този метод безопасно изтрива потребителски акаунт от системата.
+     * Включва проверки за сигурност и validation.
+     *
+     * @param userId ID на потребителя за изтриване
+     * @return true ако изтриването е успешно, false в противен случай
+     */
+    @Transactional
+    public boolean deleteUserById(Long userId) {
+        System.out.println("🗑️ Service: Attempting to delete user with ID: " + userId);
+
+        try {
+            // Стъпка 1: Проверяваме дали потребителят съществува
+            Optional<User> userOpt = userRepository.findById(userId);
+            if (userOpt.isEmpty()) {
+                System.out.println("❌ Service: User not found with ID: " + userId);
+                return false;
+            }
+
+            User user = userOpt.get();
+            System.out.println("👤 Service: Found user for deletion: " + user.getUsername());
+
+            // Стъпка 2: Безопасни проверки
+
+            // 2.1 Не позволяваме изтриване на админ потребители
+            if ("admin".equalsIgnoreCase(user.getUsername())) {
+                System.out.println("⚠️ Service: Cannot delete admin user");
+                return false;
+            }
+
+            // 2.2 Проверяваме за админ роли
+            if (user.getRoles() != null) {
+                boolean hasAdminRole = user.getRoles().stream()
+                        .anyMatch(role -> "ADMIN".equalsIgnoreCase(role.getName()));
+
+                if (hasAdminRole) {
+                    System.out.println("⚠️ Service: Cannot delete user with admin role");
+                    return false;
+                }
+            }
+
+            // Стъпка 3: Логваме информация за audit
+            System.out.println("📋 Service: Deleting user - ID: " + userId +
+                    ", Username: " + user.getUsername() +
+                    ", Employee: " + (user.getEmployee() != null ? user.getEmployee().getName() : "None"));
+
+            // Стъпка 4: Изтриваме потребителя
+            // Spring Data JPA автоматично ще управлява foreign key constraints
+            // ако са настроени правилно в entity-тата
+            userRepository.deleteById(userId);
+
+            // Стъпка 5: Проверяваме дали изтриването е успешно
+            if (!userRepository.existsById(userId)) {
+                System.out.println("✅ Service: User deleted successfully - ID: " + userId);
+                return true;
+            } else {
+                System.out.println("❌ Service: User deletion failed - user still exists");
+                return false;
+            }
+
+        } catch (Exception e) {
+            System.err.println("❌ Service: Error deleting user with ID " + userId + ": " + e.getMessage());
+            e.printStackTrace();
+
+            // В случай на грешка, транзакцията ще се rollback автоматично
+            // заради @Transactional annotation
+            return false;
+        }
+    }
 
 }

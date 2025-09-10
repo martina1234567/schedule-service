@@ -89,15 +89,15 @@
 
             <!-- БУТОНИ ЗА ДЕЙСТВИЯ -->
             <div class="form-actions">
-                <button type="submit" class="submit-btn" id="save-changes-btn">
+                <button type="submit" class="login-btn" id="save-changes-btn">
                     <span class="btn-text">Save Changes</span>
                     <span class="btn-loading" style="display: none;">Saving...</span>
                 </button>
 
-                <button type="button" class="link-btn" id="cancel-edit-btn"
-                        style="margin-top: 12px; background: #6c757d; color: white; padding: 10px 20px; border-radius: 6px;">
-                    Cancel
-                </button>
+<!--                <button type="button" class="link-btn" id="cancel-edit-btn"-->
+<!--                        style="margin-top: 12px; background: #6c757d; color: white; padding: 10px 20px; border-radius: 6px;">-->
+<!--                    Cancel-->
+<!--                </button>-->
 
                 <button type="button" class="link-btn" id="back-to-list-btn"
                         style="margin-top: 8px; color: #007bff;">
@@ -359,8 +359,7 @@
         // Форма за редактиране
         document.getElementById('edit-user-form').addEventListener('submit', handleEditSubmit);
 
-        // Cancel и Back бутони
-        document.getElementById('cancel-edit-btn').addEventListener('click', showUsersList);
+
         document.getElementById('back-to-list-btn').addEventListener('click', showUsersList);
 
         console.log('✅ Event listeners set up successfully');

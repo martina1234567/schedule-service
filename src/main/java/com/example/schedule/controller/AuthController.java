@@ -593,4 +593,38 @@ public class AuthController {
                     .body(createErrorResponse("Session validation failed"));
         }
     }
+    /**
+     * ИЗТРИВАНЕ НА ПОТРЕБИТЕЛ
+     */
+    @DeleteMapping("/users/{id}")
+    public ResponseEntity<?> deleteUser(@PathVariable Long id) {
+        try {
+            System.out.println("🗑️ Delete request for user ID: " + id);
+
+            Optional<UserDto> userOpt = authService.getUserById(id);
+            if (userOpt.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+
+            UserDto user = userOpt.get();
+            if ("admin".equalsIgnoreCase(user.getUsername())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(createErrorResponse("Cannot delete admin users"));
+            }
+
+            boolean deleted = authService.deleteUserById(id);
+            if (deleted) {
+                return ResponseEntity.noContent().build();
+            } else {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body(createErrorResponse("Failed to delete user"));
+            }
+
+        } catch (Exception e) {
+            System.err.println("❌ Error deleting user: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("An unexpected error occurred while deleting user"));
+        }
+    }
+    
 }

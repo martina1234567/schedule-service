@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Account Management - Schedule Management System</title>
-    <link rel="stylesheet" href="loginStyle.css">
+    <title>Delete Account Modal - Schedule Management System</title>
     <style>
         /* МОДАЛ СТИЛОВЕ */
         .modal-overlay {
@@ -127,7 +126,6 @@
             border-radius: 8px;
             font-size: 16px;
             transition: border-color 0.2s ease;
-            box-sizing: border-box;
         }
 
         .search-input:focus {
@@ -190,12 +188,6 @@
             border: 1px solid #f5c6cb;
         }
 
-        .message.info {
-            background: #d1ecf1;
-            color: #0c5460;
-            border: 1px solid #bee5eb;
-        }
-
         .message.hidden {
             display: none;
         }
@@ -228,42 +220,6 @@
     </style>
 </head>
 <body>
-<!-- ОСНОВЕН КОНТЕЙНЕР -->
-<div class="login-container">
-    <!-- HEADER С ЛОГО И ЗАГЛАВИЕ -->
-    <div class="login-header">
-        <div class="login-logo"><img src="images/shopping.png" alt="App Logo"></div>
-        <h1>Account Management</h1>
-        <p>Schedule Management System</p>
-    </div>
-
-    <!-- СЪОБЩЕНИЯ ЗА УСПЕХ/ГРЕШКА -->
-    <div id="error-message" class="error-message" role="alert" style="display: none;">
-        <span id="error-text"></span>
-    </div>
-    <div id="success-message" class="success-message" role="alert" style="display: none;">
-        <span id="success-text"></span>
-    </div>
-
-    <!-- ТРИ БУТОНА В ЕДНА ЛИНИЯ -->
-    <div class="form-actions">
-        <div class="button-row">
-            <button type="button" class="login-btn" id="addAccountBtn">
-                ➕ Add account
-            </button>
-            <button type="button" class="login-btn" id="deleteAccountBtn">
-                ❌ Delete account
-            </button>
-            <button type="button" class="login-btn" id="editAccountBtn">
-                ✏️ Edit account
-            </button>
-        </div>
-        <!-- НАЗАД КЪМ НАЧАЛНАТА СТРАНИЦА -->
-        <div class="form-actions" style="margin-top: 30px;">
-            <a href="index.html" class="link-btn">← Back to Account Management</a>
-        </div>
-    </div>
-</div>
 
 <!-- МОДАЛ ЗА ИЗТРИВАНЕ НА АКАУНТ -->
 <div id="deleteAccountModal" class="modal-overlay">
@@ -300,170 +256,14 @@
 
 <script>
     /**
-     * ACCOUNT MANAGEMENT JAVASCRIPT
-     * Управлява действията на трите основни бутона
+     * DELETE ACCOUNT MODAL FUNCTIONALITY
+     * Управлява функционалността за изтриване на потребителски акаунти
      */
 
-    // Глобални променливи за модала
+    // Глобални променливи
     let allUsersForDelete = [];
     let filteredUsersForDelete = [];
     let currentLoggedUser = null;
-
-    document.addEventListener('DOMContentLoaded', function() {
-        console.log('🚀 Account Management page loaded');
-
-        // Проверяваме дали потребителят е логнат
-        checkUserAuthentication();
-
-        // Настройваме event listeners за бутоните
-        setupButtonListeners();
-    });
-
-    /**
-     * ПРОВЕРКА ЗА АВТЕНТИФИКАЦИЯ
-     * Проверява дали потребителят е логнат преди да позволи достъп
-     */
-    function checkUserAuthentication() {
-        const isLoggedIn = sessionStorage.getItem('isLoggedIn');
-        const currentUser = sessionStorage.getItem('currentUser');
-
-        console.log('🔍 Checking authentication - isLoggedIn:', isLoggedIn, 'currentUser exists:', !!currentUser);
-
-        if (!isLoggedIn || isLoggedIn !== 'true' || !currentUser) {
-            console.log('❌ User not authenticated, redirecting to login...');
-            showError('You must be logged in to access account management.');
-
-            sessionStorage.clear();
-
-            setTimeout(() => {
-                window.location.href = 'login.html';
-            }, 2000);
-            return false;
-        }
-    }
-
-    /**
-     * НАСТРОЙКА НА EVENT LISTENERS ЗА БУТОНИТЕ
-     */
-    function setupButtonListeners() {
-        console.log('🎧 Setting up button listeners...');
-
-        // Add Account бутон
-        document.getElementById("addAccountBtn").addEventListener("click", handleAddAccount);
-
-        // Delete Account бутон
-        document.getElementById("deleteAccountBtn").addEventListener("click", handleDeleteAccount);
-
-        // Edit Account бутон
-        document.getElementById("editAccountBtn").addEventListener("click", handleEditAccount);
-
-        console.log('✅ Button listeners set up successfully');
-    }
-
-    /**
-     * ОБРАБОТЧИК ЗА ADD ACCOUNT БУТОН
-     * Пренасочва към регистрационната страница
-     */
-    function handleAddAccount() {
-        console.log('➕ Add Account clicked');
-
-        try {
-            // Показваме loading съобщение
-            showSuccess('Redirecting to registration page...');
-
-            // Пренасочваме към регистрационната страница
-            setTimeout(() => {
-                window.location.href = '/registration.html';
-            }, 500);
-
-        } catch (error) {
-            console.error('❌ Error redirecting to registration:', error);
-            showError('Failed to redirect to registration page');
-        }
-    }
-
-    /**
-     * ОБРАБОТЧИК ЗА DELETE ACCOUNT БУТОН
-     * Показва модала за изтриване на акаунт
-     */
-    function handleDeleteAccount() {
-        console.log('❌ Delete Account clicked');
-
-        try {
-            // Показваме модала за изтриване
-            showDeleteAccountModal();
-
-        } catch (error) {
-            console.error('❌ Error opening delete account modal:', error);
-            showError('Failed to open delete account modal');
-        }
-    }
-
-    /**
-     * ОБРАБОТЧИК ЗА EDIT ACCOUNT БУТОН
-     * Пренасочва към страницата за редактиране на акаунти
-     */
-    function handleEditAccount() {
-        console.log('✏️ Edit Account clicked');
-
-        try {
-            // Показваме loading съобщение
-            showSuccess('Loading edit account page...');
-
-            // Пренасочваме към страницата за редактиране
-            setTimeout(() => {
-                window.location.href = '/editAccount.html';
-            }, 500);
-
-        } catch (error) {
-            console.error('❌ Error redirecting to edit account:', error);
-            showError('Failed to load edit account page');
-        }
-    }
-
-    /**
-     * ПОКАЗВА СЪОБЩЕНИЕ ЗА ГРЕШКА
-     *
-     * @param {string} message - съобщението за грешка
-     */
-    function showError(message) {
-        const errorDiv = document.getElementById('error-message');
-        const errorText = document.getElementById('error-text');
-
-        errorText.textContent = message;
-        errorDiv.style.display = 'block';
-
-        // Скриваме съобщението след 5 секунди
-        setTimeout(() => {
-            errorDiv.style.display = 'none';
-        }, 5000);
-
-        console.error('❌ Error shown to user:', message);
-    }
-
-    /**
-     * ПОКАЗВА СЪОБЩЕНИЕ ЗА УСПЕХ
-     *
-     * @param {string} message - съобщението за успех
-     */
-    function showSuccess(message) {
-        const successDiv = document.getElementById('success-message');
-        const successText = document.getElementById('success-text');
-
-        successText.textContent = message;
-        successDiv.style.display = 'block';
-
-        // Скриваме съобщението след 3 секунди
-        setTimeout(() => {
-            successDiv.style.display = 'none';
-        }, 3000);
-
-        console.log('✅ Success shown to user:', message);
-    }
-
-    // ===================================
-    // ФУНКЦИОНАЛНОСТ ЗА DELETE ACCOUNT MODAL
-    // ===================================
 
     /**
      * ПОКАЗВА МОДАЛА ЗА ИЗТРИВАНЕ НА АКАУНТ
@@ -557,7 +357,7 @@
             console.log('👤 Current logged user:', currentLoggedUser);
 
             // Заявка към сървъра за всички потребители
-            const response = await fetch('http://localhost:8080/api/auth/users');
+            const response = await fetch('http://localhost:8080/users');
 
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -597,15 +397,7 @@
 
         } catch (error) {
             console.error('❌ Error loading users for delete:', error);
-
-            // Показваме по-детайлно съобщение за грешка
-            if (error.message.includes('404')) {
-                showModalMessage('Users endpoint not found. Please check if the server is running.', 'error');
-            } else if (error.message.includes('Failed to fetch')) {
-                showModalMessage('Cannot connect to server. Please check your connection.', 'error');
-            } else {
-                showModalMessage('Failed to load users. Please try again.', 'error');
-            }
+            showModalMessage('Failed to load users. Please try again.', 'error');
         }
     }
 
@@ -658,7 +450,7 @@
                         <h4>${displayName}</h4>
                         <p>@${username} • <span style="color: ${statusColor}">${status}</span></p>
                     </div>
-                    <button type="button" class="delete-btn" onclick="confirmDeleteUser(${user.id}, '${displayName.replace(/'/g, "\\'")}')">
+                    <button type="button" class="delete-btn" onclick="confirmDeleteUser(${user.id}, '${displayName}')">
                         🗑️ Delete
                     </button>
                 </div>
@@ -720,7 +512,7 @@
         showModalMessage(`Deleting ${displayName}...`, 'info');
 
         try {
-            const response = await fetch(`http://localhost:8080/api/auth/users/${userId}`, {
+            const response = await fetch(`http://localhost:8080/users/${userId}`, {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json'
@@ -793,7 +585,11 @@
         document.removeEventListener('keydown', handleEscapeKey);
     }
 
-    console.log('✅ Account Management script loaded');
+    // Експортираме функцията за използване в основния файл
+    window.showDeleteAccountModal = showDeleteAccountModal;
+
+    console.log('✅ Delete account modal script loaded');
 </script>
+
 </body>
 </html>
