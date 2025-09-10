@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Account - Schedule Management System</title>
     <link rel="stylesheet" href="loginStyle.css">
+    <link rel="icon" type="image/png" sizes="32x32" href="images/shopping.png">
 </head>
 <body>
 <!-- ОСНОВЕН КОНТЕЙНЕР -->
@@ -62,16 +63,21 @@
 
             <!-- PASSWORD ПОЛЕ -->
             <div class="form-group">
-                <input type="password" id="edit-password" class="form-input" placeholder=" " autocomplete="new-password">
-                <label for="edit-password" class="form-label">New Password (leave empty to keep current)</label>
+                <input type="password" id="password" class="form-input" placeholder=" " required autocomplete="current-password">
+                <label for="password" class="form-label">Password</label>
+                <button type="button" class="password-toggle" id="password-toggle" title="Show/Hide Password" tabindex="-1">
+                    👁️
+                </button>
                 <span class="field-error" id="password-error"></span>
-                <span class="field-help">Minimum 4 characters. Leave empty to keep current password.</span>
             </div>
 
             <!-- CONFIRM PASSWORD ПОЛЕ -->
             <div class="form-group">
                 <input type="password" id="edit-confirm-password" class="form-input" placeholder=" " autocomplete="new-password">
                 <label for="edit-confirm-password" class="form-label">Confirm New Password</label>
+                <button type="button" class="password-toggle1" id="edit-confirm-password-toggle" title="Show/Hide Password" tabindex="-1">
+                    👁️
+                </button>
                 <span class="field-error" id="confirm-password-error"></span>
                 <span class="field-help">Must match the password above if changing password.</span>
             </div>
@@ -99,10 +105,7 @@
 <!--                    Cancel-->
 <!--                </button>-->
 
-                <button type="button" class="link-btn" id="back-to-list-btn"
-                        style="margin-top: 8px; color: #007bff;">
-                    ← Back to Users List
-                </button>
+
             </div>
         </form>
     </div>
@@ -358,9 +361,6 @@
 
         // Форма за редактиране
         document.getElementById('edit-user-form').addEventListener('submit', handleEditSubmit);
-
-
-        document.getElementById('back-to-list-btn').addEventListener('click', showUsersList);
 
         console.log('✅ Event listeners set up successfully');
     }
@@ -656,6 +656,67 @@ function getEditFormData() {
             span.style.display = 'none';
         });
     }
+    // Добави този код в края на setupEventListeners() функцията
+function setupPasswordToggles() {
+    console.log('🔑 Setting up password toggle functionality');
+
+    const toggleButtons = document.querySelectorAll('.password-toggle');
+
+    toggleButtons.forEach(button => {
+        button.addEventListener('click', function(event) {
+            event.preventDefault();
+
+            const inputId = this.id.replace('-toggle', '');
+            const passwordInput = document.getElementById(inputId);
+
+            if (passwordInput) {
+                const isPassword = passwordInput.type === 'password';
+                passwordInput.type = isPassword ? 'text' : 'password';
+                this.textContent = isPassword ? '🙈' : '👁️';
+                this.title = isPassword ? 'Hide Password' : 'Show Password';
+
+                // Фокусираме полето отново
+                passwordInput.focus();
+                const len = passwordInput.value.length;
+                passwordInput.setSelectionRange(len, len);
+            }
+        });
+    });
+
+    console.log(`✅ Set up ${toggleButtons.length} password toggles`);
+}
+
+function setupPasswordToggles1() {
+    console.log('🔑 Setting up password toggle functionality');
+
+    const toggleButtons = document.querySelectorAll('.password-toggle1');
+
+    toggleButtons.forEach(button => {
+        button.addEventListener('click', function(event) {
+            event.preventDefault();
+
+            const inputId = this.id.replace('-toggle', '');
+            const passwordInput = document.getElementById(inputId);
+
+            if (passwordInput) {
+                const isPassword = passwordInput.type === 'password';
+                passwordInput.type = isPassword ? 'text' : 'password';
+                this.textContent = isPassword ? '🙈' : '👁️';
+                this.title = isPassword ? 'Hide Password' : 'Show Password';
+
+                // Фокусираме полето отново
+                passwordInput.focus();
+                const len = passwordInput.value.length;
+                passwordInput.setSelectionRange(len, len);
+            }
+        });
+    });
+
+    console.log(`✅ Set up ${toggleButtons.length} password toggles`);
+}
+// В setupEventListeners() функцията добави:
+setupPasswordToggles();
+setupPasswordToggles1();
 </script>
 
 <style>
@@ -784,7 +845,118 @@ function getEditFormData() {
             width: 100%;
         }
     }
+    /* Password Toggle Styles */
+.form-group {
+    position: relative;
+}
 
+.password-toggle {
+    position: absolute;
+    right: 25px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    font-size: 18px;
+    color: #666;
+    transition: color 0.2s ease;
+    z-index: 10;
+    user-select: none;
+    outline: none;
+}
+.password-toggle1 {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    font-size: 18px;
+    color: #666;
+    transition: color 0.2s ease;
+    z-index: 10;
+    user-select: none;
+    outline: none;
+}
+
+.password-toggle:hover {
+    color: #007bff;
+}
+
+.password-toggle:focus {
+    color: #007bff;
+    outline: 2px solid rgba(0, 123, 255, 0.3);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+.password-toggle1:hover {
+    color: #007bff;
+}
+
+.password-toggle1:focus {
+    color: #007bff;
+    outline: 2px solid rgba(0, 123, 255, 0.3);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+.form-group .form-input[type="password"],
+.form-group .form-input[type="text"] {
+    padding-right: 45px; /* Прави място за бутона */
+}
+
+.form-input {
+    padding-right: 45px; /* Място за бутона */
+}
+
+.form-group {
+    position: relative;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 8px; /* По-близо до края */
+    top: 25px; /* Фиксирана позиция от горе */
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 2px;
+    font-size: 16px;
+    color: #666;
+    z-index: 10;
+    height: 24px; /* Височина на input полето минус padding */
+    width: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.password-toggle1 {
+    position: absolute;
+    right: 8px; /* По-близо до края */
+    top: 25px; /* Фиксирана позиция от горе */
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 2px;
+    font-size: 16px;
+    color: #666;
+    z-index: 10;
+    height: 24px; /* Височина на input полето минус padding */
+    width: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Осигуряваме padding на input полето */
+.form-input {
+    padding-right: 35px !important;
+
+}
 </style>
 </body>
 </html>
