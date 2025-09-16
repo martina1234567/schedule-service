@@ -1,0 +1,441 @@
+/*
+USER DASHBOARD CSS
+Опростени стилове за employee dashboard с ограничена функционалност
+*/
+
+/* ===============================
+   LOADING SCREEN
+   =============================== */
+
+.loading-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.loading-content {
+    text-align: center;
+    color: white;
+}
+
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid rgba(255,255,255,0.3);
+    border-top: 4px solid white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 20px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* ===============================
+   MAIN LAYOUT
+   =============================== */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    background-color: #f8f9fa;
+    color: #333;
+    line-height: 1.6;
+}
+
+.app-container {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* ===============================
+   SIDEBAR
+   =============================== */
+
+.sidebar {
+    width: 280px;
+    background: linear-gradient(180deg, #2c3e50 0%, #34495e 100%);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    height: 100vh;
+    overflow-y: auto;
+    box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+}
+
+.sidebar-header {
+    padding: 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.logo-img {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+}
+
+.logo-text {
+    font-size: 20px;
+    font-weight: 600;
+    color: white;
+}
+
+.sidebar-nav {
+    flex: 1;
+    padding: 20px 0;
+}
+
+.nav-section {
+    margin-bottom: 30px;
+    padding: 0 20px;
+}
+
+.nav-section-title {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 15px;
+    color: #bdc3c7;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* ===============================
+   WEEKLY HOURS WIDGET
+   =============================== */
+
+.weekly-hours-widget {
+    background: rgba(255,255,255,0.1);
+    border-radius: 12px;
+    padding: 20px;
+    backdrop-filter: blur(10px);
+}
+
+.hours-display {
+    text-align: center;
+}
+
+.current-week {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid rgba(255,255,255,0.2);
+}
+
+.week-label {
+    font-size: 14px;
+    color: #bdc3c7;
+}
+
+.hours-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: #3498db;
+}
+
+.hours-breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.breakdown-item {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+}
+
+.breakdown-item span:first-child {
+    color: #bdc3c7;
+}
+
+.breakdown-item span:last-child {
+    color: white;
+    font-weight: 500;
+}
+
+/* ===============================
+   USER INFO
+   =============================== */
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 15px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 12px;
+}
+
+.user-avatar {
+    width: 45px;
+    height: 45px;
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 16px;
+    color: white;
+}
+
+.user-details {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.user-name {
+    font-weight: 600;
+    font-size: 14px;
+    color: white;
+}
+
+.user-role {
+    font-size: 12px;
+    color: #bdc3c7;
+}
+
+/* ===============================
+   LOGOUT BUTTON
+   =============================== */
+
+.logout-btn {
+    width: 100%;
+    padding: 12px 20px;
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+}
+
+.logout-btn:hover {
+    background: linear-gradient(135deg, #c0392b, #a93226);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(231,76,60,0.3);
+}
+
+.logout-icon {
+    font-size: 16px;
+}
+
+/* ===============================
+   MAIN CONTENT
+   =============================== */
+
+.main-content {
+    flex: 1;
+    margin-left: 280px;
+    background-color: #f8f9fa;
+}
+
+.main-header {
+    background: white;
+    padding: 20px 30px;
+    border-bottom: 1px solid #e9ecef;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.page-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 0;
+}
+
+.header-info {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.current-date {
+    font-size: 14px;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+/* ===============================
+   CALENDAR SECTION
+   =============================== */
+
+.calendar-section {
+    padding: 30px;
+}
+
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.calendar-header h2 {
+    font-size: 20px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 0;
+}
+
+.calendar-legend {
+    display: flex;
+    gap: 20px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #6c757d;
+}
+
+.legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+}
+
+.legend-color.work {
+    background: linear-gradient(135deg, #3498db, #2980b9);
+}
+
+.legend-color.leave {
+    background: linear-gradient(135deg, #e67e22, #d35400);
+}
+
+.calendar-container {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+/* ===============================
+   CALENDAR STYLING
+   =============================== */
+
+.fc {
+    font-family: inherit;
+}
+
+.fc-toolbar-title {
+    font-size: 20px !important;
+    font-weight: 600 !important;
+    color: #2c3e50 !important;
+}
+
+.fc-button-primary {
+    background: linear-gradient(135deg, #3498db, #2980b9) !important;
+    border: none !important;
+    border-radius: 6px !important;
+    padding: 8px 16px !important;
+    font-weight: 500 !important;
+}
+
+.fc-button-primary:hover {
+    background: linear-gradient(135deg, #2980b9, #21618c) !important;
+}
+
+.fc-daygrid-event {
+    border: none !important;
+    border-radius: 6px !important;
+    padding: 4px 8px !important;
+    font-weight: 500 !important;
+    font-size: 12px !important;
+}
+
+/* Event types */
+.work-event {
+    background: linear-gradient(135deg, #3498db, #2980b9) !important;
+    color: white !important;
+}
+
+.leave-event {
+    background: linear-gradient(135deg, #e67e22, #d35400) !important;
+    color: white !important;
+}
+
+.fc-event-title {
+    font-weight: 500 !important;
+}
+
+/* ===============================
+   RESPONSIVE DESIGN
+   =============================== */
+
+@media (max-width: 768px) {
+    .sidebar {
+        width: 250px;
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+    }
+
+    .sidebar.open {
+        transform: translateX(0);
+    }
+
+    .main-content {
+        margin-left: 0;
+    }
+
+    .header-content {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .calendar-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+
+    .calendar-legend {
+        gap: 15px;
+    }
+
+    .calendar-section {
+        padding: 20px 15px;
+    }
+
+    .main-header {
+        padding: 15px 20px;
+    }
+}

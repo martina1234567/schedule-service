@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Schedule Management System</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="images/shopping.png">
+    <link rel="stylesheet" href="loginStyle.css">
+</head>
+<body>
+<!-- ОСНОВЕН КОНТЕЙНЕР ЗА ЛОГИН -->
+<div class="login-container">
+    <!-- HEADER С ЛОГО И ЗАГЛАВИЕ -->
+    <div class="login-header">
+        <div class="login-logo"><img src="images/shopping.png" alt="App Logo"></div>
+        <h1>Login</h1>
+        <p>Schedule Management System</p>
+    </div>
+
+    <!-- ERROR СЪОБЩЕНИЯ -->
+    <div id="error-message" class="error-message" role="alert" style="display: none;">
+        <span id="error-text"></span>
+    </div>
+
+    <!-- SUCCESS СЪОБЩЕНИЯ -->
+    <div id="success-message" class="success-message" role="alert" style="display: none;">
+        <span id="success-text"></span>
+    </div>
+
+    <!-- ЛОГИН ФОРМА -->
+    <form class="login-form" id="loginForm" novalidate>
+        <!-- ПОЛЕ ЗА ПОТРЕБИТЕЛСКО ИМЕ/EMAIL -->
+        <div class="form-group">
+            <input
+                    type="text"
+                    id="username"
+                    class="form-input"
+                    placeholder=" "
+                    autocomplete="username"
+                    required
+            >
+            <label for="username" class="form-label">Username</label>
+        </div>
+
+        <!-- ПОЛЕ ЗА ПАРОЛА -->
+        <div class="form-group">
+            <input
+                    type="password"
+                    id="password"
+                    class="form-input"
+                    placeholder=" "
+                    autocomplete="current-password"
+                    required
+            >
+            <label for="password" class="form-label">Password</label>
+            <button type="button" class="password-toggle" id="passwordToggle" title="Покажи/скрий парола">
+                👁️
+            </button>
+        </div>
+
+        <!-- CHECKBOX ЗА "ЗАПОМНИ МЕ" -->
+        <div class="remember-me">
+            <input type="checkbox" id="rememberMe" name="rememberMe">
+            <label for="rememberMe">Remember me</label>
+        </div>
+
+        <!-- БУТОН ЗА ВЛИЗАНЕ - ПОПРАВЕНА СТРУКТУРА -->
+        <button type="submit" class="login-btn" id="loginBtn">
+            <span class="btn-text">Login</span>
+            <span class="btn-loading" style="display: none;">
+                <span class="loading-spinner"></span>
+                Loading...
+            </span>
+        </button>
+    </form>
+
+    <!-- FOOTER -->
+    <div class="login-footer">
+        <p>&copy; 2025 <span class="twingo-brand">Twingo</span>. All rights reserved.</p>
+    </div>
+</div>
+
+<script src="roleManager.js" defer></script>
+</body>
+</html>
